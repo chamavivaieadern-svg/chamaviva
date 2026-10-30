@@ -3,7 +3,7 @@ import {useEffect,useMemo,useState} from "react";
 import {MapContainer,TileLayer,CircleMarker,Popup,useMap} from "react-leaflet";
 import {createClient} from "@/lib/supabase/client";
 
-type Point={id:string;trip_id:string|null;group_id:string|null;latitude:number;longitude:number;recorded_at:string};
+type Point={id:number;trip_id:string|null;group_id:string|null;latitude:number;longitude:number;recorded_at:string};
 type Cross={id:string;name:string;latitude:number|null;longitude:number|null;address:string|null};
 function Recenter({center}:{center:[number,number]}){const map=useMap();useEffect(()=>{map.setView(center,map.getZoom());},[center,map]);return null;}
 export default function LocationMap(){
