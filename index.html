@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10233f">
+  <meta name="description" content="Central de operações Chama Viva">
+  <title>Chama Viva | Acesso</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="manifest" href="/manifest.webmanifest">
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="auth-card" aria-labelledby="page-title">
+      <div class="brand-mark" aria-hidden="true">CV</div>
+      <p class="eyebrow">PLATAFORMA DE OPERAÇÕES</p>
+      <h1 id="page-title">Chama Viva</h1>
+      <p class="muted">Entre para acessar sua área de trabalho.</p>
+      <form id="login-form">
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" autocomplete="username" required placeholder="seu@email.com">
+        <label for="password">Senha</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Sua senha">
+        <p id="form-error" class="form-error" role="alert" aria-live="polite"></p>
+        <button id="login-button" class="button button-primary" type="submit">Entrar</button>
+      </form>
+      <p class="footnote">Acesso restrito a usuários autorizados.</p>
+    </section>
+  </main>
+  <script type="module" src="/assets/js/app.js"></script>
+</body>
+</html>
