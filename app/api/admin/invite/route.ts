@@ -22,15 +22,30 @@ export async function POST(request: Request) {
     if (!email || !fullName || !body.role || !allowedRoles.includes(body.role) || !body.church_id) return NextResponse.json({ error: "Informe nome, e-mail e uma função válida." }, { status: 400 });
 
     const admin = createAdminClient();
+    const { data: church, error: churchError } = await admin
+      .from("churches")
+      .select("id")
+      .eq("id", body.church_id)
+      .maybeSingle();
+    if (churchError) throw churchError;
+    if (!church) return NextResponse.json({ error: "A igreja selecionada não foi encontrada. Atualize a lista e tente novamente." }, { status: 404 });
+
     const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: fullName }, redirectTo: new URL("/auth/callback", request.url).toString() });
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
     const { error: profileError } = await admin.from("profiles").upsert({ id: data.user.id, full_name: fullName, role: body.role, status: "active" });
     if (profileError) return NextResponse.json({ error: "Convite enviado, mas não foi possível configurar o perfil. Contate o administrador técnico." }, { status: 500 });
 
-    if (body.church_id) {
-      const { error: membershipError } = await admin.from("church_memberships").upsert({ user_id: data.user.id, church_id: body.church_id, membership_role: body.role }, { onConflict: "church_id,user_id" });
-      if (membershipError) return NextResponse.json({ error: "Usuário convidado, mas o vínculo com a igreja falhou." }, { status: 500 });
+    const { error: membershipError } = await admin
+      .from("church_memberships")
+      .upsert(
+        { user_id: data.user.id, church_id: body.church_id, membership_role: body.role },
+        { onConflict: "church_id,user_id" }
+      );
+    if (membershipError) {
+      // A conta fica sem acesso até o ADM corrigir o vínculo obrigatório.
+      await admin.from("profiles").update({ status: "invited" }).eq("id", data.user.id);
+      return NextResponse.json({ error: "O convite foi criado, mas o vínculo com a igreja falhou. A conta permanecerá sem acesso até a correção pelo ADM." }, { status: 500 });
     }
     await admin.from("audit_logs").insert({ actor_id: user.id, action: "user.invited", target_table: "profiles", target_id: data.user.id, details: { email, role: body.role, church_id: body.church_id ?? null } });
     return NextResponse.json({ ok: true, invited: email });
