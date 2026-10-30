@@ -33,6 +33,7 @@ export default function ProgramBuilder(){
   setItems(next.map((x,i)=>({...x,sort_order:i})));
  }
  async function remove(id:string){if(!confirm("Remover esta participação da programação?"))return;const db=createClient();const {error}=await db.from("program_items").delete().eq("id",id);if(error)setError(error.message);else loadItems(eventId);}
+ async function publish(){if(!eventId||!["admin","director"].includes(role))return;if(!confirm("Publicar esta programação para os usuários autorizados da igreja?"))return;setBusy(true);setError("");const db=createClient();const {error}=await db.from("events").update({status:"published"}).eq("id",eventId);if(error)setError(error.message);else{setMessage("Programação publicada e notificações enviadas.");await loadEvents();}setBusy(false);}
  async function downloadPdf(){
   if(!["admin","director"].includes(role)){setError("Somente ADM e dirigente podem baixar o PDF.");return;}
   const event=events.find(x=>x.id===eventId);if(!event)return;setBusy(true);setError("");
@@ -59,7 +60,7 @@ export default function ProgramBuilder(){
  }
  const canDownload=role==="admin"||role==="director";
  return <section className="program-builder">
-  <div className="program-head"><div><b>Montar programação do culto</b><small>Defina a ordem, os participantes, horários e duração.</small></div>{canDownload&&<button className="module-primary" onClick={downloadPdf} disabled={!eventId||busy}><FileDown size={15}/> Baixar PDF</button>}</div>
+  <div className="program-head"><div><b>Montar programação do culto</b><small>Defina a ordem, os participantes, horários e duração.</small></div><div className="program-head-actions">{canDownload&&<button className="module-primary" onClick={publish} disabled={!eventId||busy}><CheckCircle2 size={15}/> Publicar</button>}{canDownload&&<button className="module-primary" onClick={downloadPdf} disabled={!eventId||busy}><FileDown size={15}/> Baixar PDF</button>}</div></div>
   <label className="program-event-select">Programação<select value={eventId} onChange={e=>setEventId(e.target.value)}><option value="">Selecione um evento</option>{events.map(e=><option key={e.id} value={e.id}>{e.title} — {new Date(e.starts_at).toLocaleDateString("pt-BR")}</option>)}</select></label>
   {eventId&&<><form className="program-item-form" onSubmit={addItem}><b><Plus size={15}/> Adicionar participação</b><div className="program-fields">
    <label>Atividade<input required value={form.title} onChange={e=>setForm(v=>({...v,title:e.target.value}))} placeholder="Ex.: Saudação, louvor, pregação"/></label>
