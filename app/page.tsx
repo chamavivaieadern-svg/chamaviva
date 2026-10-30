@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from "react";\nimport "./dashboard.css";
 import {
-  Activity, Bell, BusFront, CalendarDays, ChevronDown, ChevronRight,
-  Church, ClipboardList, Compass, FileText, Flame, LayoutDashboard,
+  Bell, BusFront, CalendarDays, ChevronDown, ChevronRight,
+  Church, Compass, FileText, Flame, LayoutDashboard,
   MapPinned, Menu, MessageSquare, Music2, Search, Settings, ShieldCheck,
   Users, X, ArrowUpRight, Clock3, MapPin, CircleCheck, CircleAlert,
-  Plus, MoreHorizontal, Radio, UserRound, Route, ChartNoAxesCombined
+  Plus, MoreHorizontal, Route, ChartNoAxesCombined
 } from "lucide-react";
 
 type NavItem = { label: string; icon: typeof LayoutDashboard; group: string };
