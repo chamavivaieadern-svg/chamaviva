@@ -3,7 +3,7 @@ import {useEffect,useRef,useState} from "react";
 import {createClient} from "@/lib/supabase/client";
 import {Radio,MapPin,BusFront,Users,Square,Wifi,ShieldCheck} from "lucide-react";
 
-type Trip={id:string;title:string;status:string;destination:string|null};
+type Trip={id:string;title:string;status:string;destination:string|null;departure_at:string|null};
 type Group={id:string;name:string;status:string;trip_id:string|null};
 type Active={kind:"trip"|"group";id:string;label:string};
 export default function LocationControls(){
@@ -12,7 +12,7 @@ export default function LocationControls(){
  const [active,setActive]=useState<Active|null>(null),[message,setMessage]=useState(""),[busy,setBusy]=useState(false),[finishStatus,setFinishStatus]=useState("completed");
  const watchRef=useRef<number|null>(null),lastSent=useRef(0);
  useEffect(()=>{let alive=true;(async()=>{const db=createClient();const {data:{user}}=await db.auth.getUser();if(!user)return;
-  const [t,g]=await Promise.all([db.from("trips").select("id,title,status,destination").eq("driver_id",user.id).in("status",["scheduled","awaiting_departure","in_progress"]),db.from("evangelism_groups").select("id,name,status,trip_id").eq("leader_id",user.id).in("status",["planned","active"])]);
+  const [t,g]=await Promise.all([db.from("trips").select("id,title,status,destination,departure_at").eq("driver_id",user.id).in("status",["scheduled","awaiting_departure","in_progress"]),db.from("evangelism_groups").select("id,name,status,trip_id").eq("leader_id",user.id).in("status",["planned","active"])]);
   if(alive){setTrips(t.data||[]);setGroups(g.data||[]);}
  })();return()=>{alive=false;if(watchRef.current!==null)navigator.geolocation?.clearWatch(watchRef.current);};},[]);
  async function start(kind:"trip"|"group",id:string,label:string){
@@ -53,7 +53,7 @@ export default function LocationControls(){
  return <section className="gps-controls">
   <div className="gps-heading"><ShieldCheck size={18}/><div><b>Compartilhamento de localização</b><small>O GPS só é enviado após sua autorização e durante uma atividade ativa.</small></div></div>
   {active?<div className="gps-active"><span><i/> COMPARTILHAMENTO ATIVO</span><b>{active.label}</b>{active.kind==="trip"&&<select className="gps-finish-status" value={finishStatus} onChange={e=>setFinishStatus(e.target.value)}><option value="arrived">Cheguei ao destino</option><option value="completed">Viagem concluída</option><option value="issue">Registrar problema</option></select>}<button onClick={stop} disabled={busy}><Square size={14} fill="currentColor"/> Encerrar e parar GPS</button></div>:<div className="gps-options">
-   <div className="gps-option"><div><BusFront size={18}/><b>Sou motorista</b></div><select value={selectedTrip} onChange={e=>setSelectedTrip(e.target.value)}><option value="">Selecione sua viagem</option>{trips.map(t=><option key={t.id} value={t.id}>{t.title} • {t.status}</option>)}</select><button disabled={!selectedTrip||busy} onClick={()=>{const t=trips.find(x=>x.id===selectedTrip);if(t)start("trip",t.id,t.title);}}><Radio size={15}/> {trips.find(t=>t.id===selectedTrip)?.status==="in_progress"?"Retomar compartilhamento":"Autorizar e iniciar viagem"}</button></div>
+   <div className="gps-option"><div><BusFront size={18}/><b>Sou motorista</b></div><select value={selectedTrip} onChange={e=>setSelectedTrip(e.target.value)}><option value="">Selecione sua viagem</option>{trips.map(t=><option key={t.id} value={t.id}>{t.title} • {t.departure_at?new Date(t.departure_at).toLocaleString("pt-BR"):"horário a definir"} • {t.status}</option>)}</select><button disabled={!selectedTrip||busy} onClick={()=>{const t=trips.find(x=>x.id===selectedTrip);if(t)start("trip",t.id,t.title);}}><Radio size={15}/> {trips.find(t=>t.id===selectedTrip)?.status==="in_progress"?"Retomar compartilhamento":trips.find(t=>t.id===selectedTrip)?.departure_at&&new Date(trips.find(t=>t.id===selectedTrip)!.departure_at!).getTime()<=Date.now()?"Confirmar início programado":"Iniciar manualmente"}</button></div>
    <div className="gps-option"><div><Users size={18}/><b>Sou líder de grupo</b></div><select value={selectedGroup} onChange={e=>setSelectedGroup(e.target.value)}><option value="">Selecione seu grupo</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name} • {g.status}</option>)}</select><button disabled={!selectedGroup||busy} onClick={()=>{const g=groups.find(x=>x.id===selectedGroup);if(g)start("group",g.id,g.name);}}><Radio size={15}/> {groups.find(g=>g.id===selectedGroup)?.status==="active"?"Retomar compartilhamento":"Autorizar e iniciar evangelismo"}</button></div>
   </div>}
   {message&&<p className="gps-message"><Wifi size={14}/>{message}</p>}
