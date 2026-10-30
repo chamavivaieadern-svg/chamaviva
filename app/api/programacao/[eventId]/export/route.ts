@@ -7,7 +7,7 @@ export async function GET(_request:Request,{params}:{params:Promise<{eventId:str
   const {data:{user}}=await db.auth.getUser();
   if(!user)return NextResponse.json({error:"Não autenticado."},{status:401});
   const {data:assurance}=await db.auth.mfa.getAuthenticatorAssuranceLevel();
-  if(assurance.currentLevel!=="aal2")return NextResponse.json({error:"Confirme a autenticação em duas etapas."},{status:403});
+  if(!assurance || assurance.currentLevel!=="aal2")return NextResponse.json({error:"Confirme a autenticação em duas etapas."},{status:403});
   const {data:profile}=await db.from("profiles").select("role,status").eq("id",user.id).single();
   if(profile?.status!=="active"||!["admin","director"].includes(profile?.role||""))return NextResponse.json({error:"Somente ADM e dirigente podem exportar a programação oficial."},{status:403});
   const {eventId}=await params;
