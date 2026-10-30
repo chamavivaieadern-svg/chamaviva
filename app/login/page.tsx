@@ -8,6 +8,7 @@ import { Flame, LockKeyhole, Mail } from "lucide-react";
 export default function LoginPage() {
   const router = useRouter();
   const params = useSearchParams();
+  const blocked = params.get("blocked") === "1";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -31,6 +32,7 @@ export default function LoginPage() {
   return <main className="auth-shell"><section className="auth-card">
     <div className="auth-brand"><span><Flame size={27} fill="currentColor"/></span><div><b>CHAMA VIVA</b><small>GESTÃO E EVANGELISMO</small></div></div>
     <p className="auth-kicker">ACESSO SEGURO</p><h1>Bem-vindo de volta</h1><p className="auth-muted">Entre com seu e-mail e sua senha individuais.</p>
+    {blocked && <p className="auth-error">Esta conta está bloqueada. Procure o administrador.</p>}
     <form onSubmit={submit} className="auth-form">
       <label>E-mail<div className="auth-input"><Mail size={17}/><input type="email" autoComplete="username" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="voce@exemplo.com"/></div></label>
       <label>Senha<div className="auth-input"><LockKeyhole size={17}/><input type="password" autoComplete="current-password" required value={password} onChange={e=>setPassword(e.target.value)} placeholder="Sua senha"/></div></label>
