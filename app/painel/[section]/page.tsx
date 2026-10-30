@@ -1,7 +1,7 @@
 import { redirect,notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ModuleWorkspace from "./module-workspace";
-const allowed=["igrejas","programacao","musicas","viagens","evangelismo","mensagens","documentos","mapa"];
+const allowed=["igrejas","programacao","musicas","viagens","evangelismo","mensagens","documentos","mapa","relatorios","configuracoes"];
 export default async function SectionPage({params}:{params:Promise<{section:string}>}){
  const {section}=await params;if(!allowed.includes(section))notFound();
  const db=await createClient();const {data:{user}}=await db.auth.getUser();if(!user)redirect("/login");
