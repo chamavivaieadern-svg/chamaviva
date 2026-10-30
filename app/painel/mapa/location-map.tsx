@@ -2,7 +2,6 @@
 import {useEffect,useMemo,useState} from "react";
 import {MapContainer,TileLayer,CircleMarker,Popup,Polyline,useMap} from "react-leaflet";
 import {createClient} from "@/lib/supabase/client";
-import "leaflet/dist/leaflet.css";
 
 type Point={id:string;trip_id:string|null;group_id:string|null;latitude:number;longitude:number;recorded_at:string};
 type Cross={id:string;name:string;latitude:number|null;longitude:number|null;address:string|null};
