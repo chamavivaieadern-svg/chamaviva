@@ -1,6 +1,7 @@
 "use client";
 import { useEffect,useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import LocationControls from "../mapa/location-controls";
 import { RefreshCw,MapPin,BusFront,Users,CalendarDays,Music2,MessageSquare,FileText,Church,CheckCircle2,AlertCircle } from "lucide-react";
 
 const modules:Record<string,{title:string;description:string;table:string;icon:string;columns:string[]}> = {
@@ -26,6 +27,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  const Icon=config.icon==="church"?Church:config.icon==="calendar"?CalendarDays:config.icon==="music"?Music2:config.icon==="bus"?BusFront:config.icon==="users"?Users:config.icon==="message"?MessageSquare:config.icon==="file"?FileText:MapPin;
  async function approve(id:unknown,status:string){const db=createClient();const {data:{user}}=await db.auth.getUser();const {error}=await db.from("songs").update({status,reviewed_by:user?.id,reviewed_at:new Date().toISOString()}).eq("id",String(id));if(error)setError(error.message);else load();}
  return <main className="module-page"><div className="workspace-head"><div className="workspace-icon-large"><Icon size={24}/></div><div><span className="auth-kicker">CHAMA VIVA • MÓDULO</span><h1>{config.title}</h1><p>{config.description}</p></div><button className="module-refresh" onClick={load}><RefreshCw size={15}/> Atualizar</button></div>
+ {section==="mapa"&&<LocationControls/>}
  {section==="mapa"&&<div className="map-info-card"><MapPin size={19}/><div><b>Localização compartilhada com consentimento</b><p>As posições são registradas somente durante viagens ou evangelismos ativos. A tabela abaixo mostra o horário real da última atualização; não representa rastreamento em tempo real enquanto não houver um dispositivo enviando GPS.</p></div></div>}
  {section==="musicas"&&role==="director"&&<div className="map-info-card"><CheckCircle2 size={18}/><div><b>Aprovação do dirigente</b><p>Somente letras aprovadas podem entrar na programação oficial.</p></div></div>}
  {error&&<p className="module-error"><AlertCircle size={15}/>{error}</p>}
