@@ -141,7 +141,7 @@ export default function Home() {
             <section className="content-grid">
               <div className="panel events-panel">
                 <div className="panel-heading"><div><h3>Próximas programações</h3><p>Agenda geral das regiões</p></div><button className="text-button" onClick={() => navigate("Cultos e programação")}>Ver calendário <ArrowUpRight size={15}/></button></div>
-                <div className="event-list">{upcomingEvents.map((event) => <div className="event-row" key={event.id}><div className="date-tile"><strong>{event.day}</strong><span>{event.month}</span></div><div className="event-info"><strong>{event.title}</strong><span><MapPin size={13}/>{event.church}</span></div><div className="event-meta"><span className="event-time"><Clock3 size={13}/>{event.time}</span><span className={`status-pill status-${event.tone}`}>{event.status}</span></div><ChevronRight className="event-chevron" size={17}/></div>)}</div>
+                <div className="event-list">{upcomingEvents.map((event) => <div className="event-row" key={event.id}><div className="date-tile"><strong>{event.day}</strong><span>{event.month}</span></div><div className="event-info"><strong>{event.title}</strong><span><MapPin size={13}/>{event.church}</span></div><div className="event-meta"><span className="event-time"><Clock3 size={13}/>{event.time}</span><span className={`status-pill status-${event.tone}`}>{event.status}</span></div><ChevronRight className="event-chevron" size={17}/></div>)}{upcomingEvents.length===0&&<p className="data-empty">Nenhuma programação futura encontrada para sua conta.</p>}</div>
                 <button className="panel-footer-button" onClick={() => navigate("Cultos e programação")}>Abrir programação completa <ArrowUpRight size={15}/></button>
               </div>
               <div className="panel activity-panel">
@@ -153,9 +153,9 @@ export default function Home() {
 
             <section className="content-grid lower-grid">
               <div className="panel map-panel">
-                <div className="panel-heading"><div><h3>Central de localização</h3><p>Ônibus, equipes e pontos de cruzada</p></div><span className="live-label"><i/> AO VIVO</span></div>
-                <div className="map-placeholder"><div className="map-roads road-a"/><div className="map-roads road-b"/><div className="map-roads road-c"/><div className="map-block block-a"/><div className="map-block block-b"/><div className="map-block block-c"/><div className="map-pin pin-bus"><BusFront size={16}/></div><div className="map-pin pin-team"><Users size={15}/></div><div className="map-pin pin-cross"><Church size={16}/></div><div className="map-caption"><MapPinned size={15}/> O mapa será ativado após configurar a integração.</div></div>
-                <div className="map-legend"><span><i className="legend-bus"/> Ônibus</span><span><i className="legend-team"/> Grupos</span><span><i className="legend-cross"/> Cruzada</span></div>
+                <div className="panel-heading"><div><h3>Central de localização</h3><p>Ônibus, equipes e pontos de cruzada</p></div><span className="live-label">MAPA OPERACIONAL</span></div>
+                <button className="map-placeholder map-open-button" onClick={() => navigate("Mapa ao vivo")}><MapPinned size={28}/><strong>Abrir mapa de operações</strong><span>Veja ônibus, grupos de evangelismo e locais de cruzada com dados recebidos do Supabase.</span></button>
+                
               </div>
               <div className="panel quick-panel">
                 <div className="panel-heading"><div><h3>Acesso rápido</h3><p>Atalhos para tarefas frequentes</p></div></div>
