@@ -6,7 +6,8 @@ declare passenger_count integer;
 begin
  select v.capacity into vehicle_capacity
  from public.trips t left join public.vehicles v on v.id=t.vehicle_id
- where t.id=new.trip_id;
+ where t.id=new.trip_id
+ for update of t;
  if vehicle_capacity is not null then
   select count(*) into passenger_count from public.trip_passengers p where p.trip_id=new.trip_id;
   if passenger_count >= vehicle_capacity then
