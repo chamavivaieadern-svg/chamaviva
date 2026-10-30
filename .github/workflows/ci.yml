@@ -18,5 +18,7 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - run: npm audit --json > npm-audit.json || true
+      - run: cat npm-audit.json
       - run: npm run lint
       - run: npm run build
