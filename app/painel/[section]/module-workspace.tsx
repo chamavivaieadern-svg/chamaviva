@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import LocationControls from "../mapa/location-controls";
 import ModuleActions from "./module-actions";
+import ModuleNav from "@/app/components/module-nav";
 import ProgramBuilder from "../programacao/program-builder";
 import TripPassengers from "../viagens/passengers";
 import VehicleManager from "../viagens/vehicle-manager";
@@ -36,7 +37,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  useEffect(()=>{const db=createClient();const channel=db.channel("module-live-"+section).on("postgres_changes",{event:"*",schema:"public",table:config.table},()=>load()).subscribe();return()=>{db.removeChannel(channel);};},[section]);
  const Icon=config.icon==="church"?Church:config.icon==="calendar"?CalendarDays:config.icon==="music"?Music2:config.icon==="bus"?BusFront:config.icon==="users"?Users:config.icon==="message"?MessageSquare:config.icon==="file"?FileText:MapPin;
  async function approve(id:unknown,status:string){const db=createClient();const {error}=await db.rpc("review_song",{target_song:String(id),decision:status});if(error)setError(error.message);else load();}
- return <main className="module-page"><div className="workspace-head"><div className="workspace-icon-large"><Icon size={24}/></div><div><span className="auth-kicker">CHAMA VIVA • MÓDULO</span><h1>{config.title}</h1><p>{config.description}</p></div><button className="module-refresh" onClick={load}><RefreshCw size={15}/> Atualizar</button></div>
+ return <main className="module-page"><ModuleNav/><div className="workspace-head"><div className="workspace-icon-large"><Icon size={24}/></div><div><span className="auth-kicker">CHAMA VIVA • MÓDULO</span><h1>{config.title}</h1><p>{config.description}</p></div><button className="module-refresh" onClick={load}><RefreshCw size={15}/> Atualizar</button></div>
  {section!=="relatorios"&&section!=="configuracoes"&&<ModuleActions section={section} onCreated={load}/>}
  {section==="programacao"&&<ProgramBuilder/>}
  {section==="viagens"&&<VehicleManager/>}
