@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import NotificationBell from "./components/notification-bell";
 import "./dashboard.css";
 import {
-  Bell, BusFront, CalendarDays, ChevronDown, ChevronRight,
+  BusFront, CalendarDays, ChevronDown, ChevronRight,
   Church, Compass, FileText, Flame, LayoutDashboard,
   MapPinned, Menu, MessageSquare, Music2, Search, Settings, ShieldCheck,
   Users, X, ArrowUpRight, Clock3, MapPin, CircleCheck, CircleAlert,
@@ -44,7 +45,6 @@ export default function Home() {
   const [active, setActive] = useState("Visão geral");
   const navigate = (label:string) => { const paths:Record<string,string>={"Visão geral":"/painel","Igrejas e regiões":"/painel/igrejas","Usuários e equipes":"/painel/usuarios","Cultos e programação":"/painel/programacao","Músicas e repertório":"/painel/musicas","Viagens e ônibus":"/painel/viagens","Mapa ao vivo":"/painel/mapa","Evangelismo":"/painel/evangelismo","Mensagens e avisos":"/painel/mensagens","Relatórios":"/painel/relatorios","Documentos e logos":"/painel/documentos","Configurações":"/painel/configuracoes"}; setActive(label); setMobileOpen(false); router.push(paths[label]||"/painel"); };
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showWelcome, setShowWelcome] = useState(true);
 
@@ -103,12 +103,7 @@ export default function Home() {
           </div>
           <div className="topbar-actions">
             <div className="today-label"><CalendarDays size={16}/> Sexta-feira, 30 de outubro</div>
-            <div className="notification-wrap">
-              <button className={`icon-button notification-button ${notificationsOpen ? "pressed" : ""}`} onClick={() => setNotificationsOpen(!notificationsOpen)} aria-label="Notificações">
-                <Bell size={19}/><i className="notification-dot"/>
-              </button>
-              {notificationsOpen && <div className="notification-popover"><div className="popover-head"><strong>Notificações</strong><span>3 novas</span></div><p><b>Nova letra enviada</b><small>Equipe de louvor • há 8 min</small></p><p><b>Viagem adicionada</b><small>Região Norte • há 24 min</small></p><p><b>Observação recebida</b><small>Pastor • há 42 min</small></p><button onClick={() => { navigate("Mensagens e avisos"); setNotificationsOpen(false); }}>Ver central de comunicação</button></div>}
-            </div>
+            <NotificationBell/>
             <div className="avatar avatar-admin top-avatar">AD</div>
           </div>
         </header>
