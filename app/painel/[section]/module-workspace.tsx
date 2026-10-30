@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import LocationControls from "../mapa/location-controls";
 import ModuleActions from "./module-actions";
 import ModuleNav from "@/app/components/module-nav";
+import AccountSettings from "../configuracoes/account-settings";
 import ProgramBuilder from "../programacao/program-builder";
 import TripPassengers from "../viagens/passengers";
 import VehicleManager from "../viagens/vehicle-manager";
@@ -46,6 +47,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  {section==="viagens"&&<VehicleManager/>}
  {section==="viagens"&&<TripPassengers/>}
  {section==="relatorios"&&<TravelReports/>}
+ {section==="configuracoes"&&<AccountSettings/>}
  {(section==="mapa"||section==="evangelismo")&&<LocationControls/>}
  {(section==="mapa"||section==="evangelismo")&&<LocationMap/>}
  {section==="mapa"&&<div className="map-info-card"><MapPin size={19}/><div><b>Localização compartilhada com consentimento</b><p>As posições são registradas somente durante viagens ou evangelismos ativos. A tabela abaixo mostra o horário real da última atualização; não representa rastreamento em tempo real enquanto não houver um dispositivo enviando GPS.</p></div></div>}
