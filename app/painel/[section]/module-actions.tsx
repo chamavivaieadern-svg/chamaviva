@@ -11,8 +11,8 @@ export default function ModuleActions({section,onCreated}:{section:string;onCrea
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[success,setSuccess]=useState("");
  const set=(key:string,value:string)=>setForm(v=>({...v,[key]:value}));
  useEffect(()=>{(async()=>{const db=createClient();const {data:{user}}=await db.auth.getUser();if(user)setUserId(user.id);
-  const [c,p]=await Promise.all([db.from("churches").select("id,name").order("name"),db.from("profiles").select("id,full_name").in("role",["driver","leader","pastor","director","preacher","musician"])]);
-  setChurches(c.data||[]);setPeople((p.data||[]).map(x=>({id:x.id,name:x.full_name||x.id.slice(0,8)})));
+  const [c,p,v]=await Promise.all([db.from("churches").select("id,name").order("name"),db.from("profiles").select("id,full_name").in("role",["driver","leader","pastor","director","preacher","musician"]),db.from("vehicles").select("id,name,capacity").order("name")]);
+  setChurches(c.data||[]);setPeople((p.data||[]).map(x=>({id:x.id,name:x.full_name||x.id.slice(0,8)})));setVehicles(v.data||[]);
  })();},[]);
  const allowed:Record<string,string[]>={igrejas:["admin"],programacao:["admin","pastor","director"],musicas:["musician"],viagens:["admin","pastor"],evangelismo:["admin","pastor"],mensagens:["admin","pastor","leader","driver","director","preacher","musician"],mapa:["admin","pastor"],documentos:["admin"]};
  const [role,setRole]=useState("");
