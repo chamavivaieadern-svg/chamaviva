@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import LocationControls from "../mapa/location-controls";
 import ModuleActions from "./module-actions";
 import ProgramBuilder from "../programacao/program-builder";
+import TripPassengers from "../viagens/passengers";
 const LocationMap=dynamic(()=>import("../mapa/location-map"),{ssr:false,loading:()=> <div className="data-empty">Carregando mapa...</div>});
 import { RefreshCw,MapPin,BusFront,Users,CalendarDays,Music2,MessageSquare,FileText,Church,CheckCircle2,AlertCircle } from "lucide-react";
 
@@ -33,6 +34,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  return <main className="module-page"><div className="workspace-head"><div className="workspace-icon-large"><Icon size={24}/></div><div><span className="auth-kicker">CHAMA VIVA • MÓDULO</span><h1>{config.title}</h1><p>{config.description}</p></div><button className="module-refresh" onClick={load}><RefreshCw size={15}/> Atualizar</button></div>
  {section!=="relatorios"&&section!=="configuracoes"&&<ModuleActions section={section} onCreated={load}/>}
  {section==="programacao"&&<ProgramBuilder/>}
+ {section==="viagens"&&<TripPassengers/>}
  {section==="mapa"&&<LocationControls/>}
  {section==="mapa"&&<LocationMap/>}
  {section==="mapa"&&<div className="map-info-card"><MapPin size={19}/><div><b>Localização compartilhada com consentimento</b><p>As posições são registradas somente durante viagens ou evangelismos ativos. A tabela abaixo mostra o horário real da última atualização; não representa rastreamento em tempo real enquanto não houver um dispositivo enviando GPS.</p></div></div>}
