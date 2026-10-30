@@ -51,6 +51,7 @@ export default function ProgramBuilder(){
     pdf.text((i+1)+". "+time+"  "+item.title,14,y);y+=5;
     pdf.setFont("helvetica","normal");pdf.setFontSize(9);const detail=[item.participant_name,item.duration_minutes?item.duration_minutes+" min":null,item.item_type].filter(Boolean).join(" • ");if(detail){pdf.text(detail,19,y);y+=5;}
     if(item.notes){const lines=pdf.splitTextToSize(item.notes,175);pdf.text(lines,19,y);y+=lines.length*4.5;}
+    if(item.lyrics){const lyricsLines=pdf.splitTextToSize("LETRA: "+item.lyrics,175);for(const line of lyricsLines){if(y>275){pdf.addPage();y=18;}pdf.text(line,19,y);y+=4.2;}}
     y+=3;
    }
    pdf.setFontSize(8);pdf.setTextColor(120,110,100);pdf.text("Documento gerado pelo CHAMA VIVA",14,286);
