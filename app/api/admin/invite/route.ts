@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const body = await request.json() as { email?: string; full_name?: string; role?: string; church_id?: string };
     const email = body.email?.trim().toLowerCase();
     const fullName = body.full_name?.trim();
-    if (!email || !fullName || !body.role || !allowedRoles.includes(body.role)) return NextResponse.json({ error: "Informe nome, e-mail e uma função válida." }, { status: 400 });
+    if (!email || !fullName || !body.role || !allowedRoles.includes(body.role) || !body.church_id) return NextResponse.json({ error: "Informe nome, e-mail e uma função válida." }, { status: 400 });
 
     const admin = createAdminClient();
     const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: fullName }, redirectTo: new URL("/auth/callback", request.url).toString() });
