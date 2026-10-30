@@ -79,7 +79,7 @@ export default function Home() {
             <div className="nav-group" key={group}>
               <p className="nav-label">{group}</p>
               {items.map(({ label, icon: Icon }) => (
-                <button key={label} className={`nav-link ${active === label ? "nav-link-active" : ""}`} onClick={() => { setActive(label); setMobileOpen(false); }}>
+                <button key={label} className={`nav-link ${active === label ? "nav-link-active" : ""}`} onClick={() => navigate(label)}>
                   <Icon size={18}/><span>{label}</span>{label === "Mensagens e avisos" && <i className="nav-count">3</i>}
                 </button>
               ))}
@@ -89,7 +89,7 @@ export default function Home() {
         </nav>
         <div className="sidebar-bottom">
           <div className="security-note"><ShieldCheck size={17}/><div><strong>Acesso protegido</strong><span>Área administrativa</span></div></div>
-          <button className="profile-row" onClick={() => setActive("Configurações")}>
+          <button className="profile-row" onClick={() => navigate("Configurações")}>
             <div className="avatar avatar-admin">AD</div><div className="profile-copy"><strong>Administrador</strong><span>Administrador geral</span></div><MoreHorizontal size={18}/>
           </button>
         </div>
@@ -107,7 +107,7 @@ export default function Home() {
               <button className={`icon-button notification-button ${notificationsOpen ? "pressed" : ""}`} onClick={() => setNotificationsOpen(!notificationsOpen)} aria-label="Notificações">
                 <Bell size={19}/><i className="notification-dot"/>
               </button>
-              {notificationsOpen && <div className="notification-popover"><div className="popover-head"><strong>Notificações</strong><span>3 novas</span></div><p><b>Nova letra enviada</b><small>Equipe de louvor • há 8 min</small></p><p><b>Viagem adicionada</b><small>Região Norte • há 24 min</small></p><p><b>Observação recebida</b><small>Pastor • há 42 min</small></p><button onClick={() => { setActive("Mensagens e avisos"); setNotificationsOpen(false); }}>Ver central de comunicação</button></div>}
+              {notificationsOpen && <div className="notification-popover"><div className="popover-head"><strong>Notificações</strong><span>3 novas</span></div><p><b>Nova letra enviada</b><small>Equipe de louvor • há 8 min</small></p><p><b>Viagem adicionada</b><small>Região Norte • há 24 min</small></p><p><b>Observação recebida</b><small>Pastor • há 42 min</small></p><button onClick={() => { navigate("Mensagens e avisos"); setNotificationsOpen(false); }}>Ver central de comunicação</button></div>}
             </div>
             <div className="avatar avatar-admin top-avatar">AD</div>
           </div>
@@ -121,7 +121,7 @@ export default function Home() {
               <button className="banner-close" onClick={() => setShowWelcome(false)} aria-label="Fechar boas-vindas"><X size={17}/></button>
             </section>}
 
-            <div className="section-heading"><div><span className="eyebrow muted-eyebrow">ACOMPANHAMENTO GERAL</span><h2>Visão geral</h2><p>Acompanhe o que está acontecendo em todas as regiões.</p></div><button className="button-primary" onClick={() => setActive("Cultos e programação")}><Plus size={17}/> Nova programação</button></div>
+            <div className="section-heading"><div><span className="eyebrow muted-eyebrow">ACOMPANHAMENTO GERAL</span><h2>Visão geral</h2><p>Acompanhe o que está acontecendo em todas as regiões.</p></div><button className="button-primary" onClick={() => navigate("Cultos e programação")}><Plus size={17}/> Nova programação</button></div>
 
             <section className="stats-grid">
               <StatCard icon={Church} label="Igrejas cadastradas" value="—" helper="Cadastre suas regiões" tint="orange"/>
@@ -139,7 +139,7 @@ export default function Home() {
               <div className="panel activity-panel">
                 <div className="panel-heading"><div><h3>Atividade recente</h3><p>Movimentações do sistema</p></div><button className="icon-button subtle-icon" aria-label="Mais opções"><MoreHorizontal size={19}/></button></div>
                 <div className="activity-list">{activities.map(({icon: Icon,title,detail,time,color}) => <div className="activity-row" key={title}><div className={`activity-icon activity-${color}`}><Icon size={17}/></div><div className="activity-copy"><strong>{title}</strong><span>{detail}</span><small>{time}</small></div></div>)}</div>
-                <button className="panel-footer-button" onClick={() => setActive("Relatórios")}>Ver histórico de atividades <ArrowUpRight size={15}/></button>
+                <button className="panel-footer-button" onClick={() => navigate("Relatórios")}>Ver histórico de atividades <ArrowUpRight size={15}/></button>
               </div>
             </section>
 
@@ -152,10 +152,10 @@ export default function Home() {
               <div className="panel quick-panel">
                 <div className="panel-heading"><div><h3>Acesso rápido</h3><p>Atalhos para tarefas frequentes</p></div></div>
                 <div className="quick-actions">
-                  <QuickAction icon={Church} label="Cadastrar igreja" onClick={() => setActive("Igrejas e regiões")}/>
-                  <QuickAction icon={Users} label="Convidar usuário" onClick={() => setActive("Usuários e equipes")}/>
+                  <QuickAction icon={Church} label="Cadastrar igreja" onClick={() => navigate("Igrejas e regiões")}/>
+                  <QuickAction icon={Users} label="Convidar usuário" onClick={() => navigate("Usuários e equipes")}/>
                   <QuickAction icon={CalendarDays} label="Criar programação" onClick={() => setActive("Cultos e programação")}/>
-                  <QuickAction icon={Route} label="Organizar viagem" onClick={() => setActive("Viagens e ônibus")}/>
+                  <QuickAction icon={Route} label="Organizar viagem" onClick={() => navigate("Viagens e ônibus")}/>
                 </div>
               </div>
             </section>
