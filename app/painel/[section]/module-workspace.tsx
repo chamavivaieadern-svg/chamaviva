@@ -18,7 +18,7 @@ function fmt(v:unknown){if(v===null||v===undefined||v==="")return "—";if(typeo
 export default function ModuleWorkspace({section}:{section:string}){
  const config=modules[section];const [rows,setRows]=useState<Record<string,unknown>[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState("");const [role,setRole]=useState("");
  async function load(){setLoading(true);setError("");try{const db=createClient();const {data:{user}}=await db.auth.getUser();if(user){const {data:p}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();setRole(p?.role||"");}
-  let query=db.from(config.table).select(config.columns.join(",")).order("created_at",{ascending:false}).limit(100);
+  let query=db.from(config.table).select(config.columns.join(",")).order(section==="mapa"?"recorded_at":"created_at",{ascending:false}).limit(100);
   if(section==="mensagens"&&user)query=query.or("sender_id.eq."+user.id+",recipient_id.eq."+user.id);
   const {data,error}=await query;if(error)throw error;setRows((data||[]) as Record<string,unknown>[]);
  }catch(e){setError(e instanceof Error?e.message:"Não foi possível carregar os dados.");}finally{setLoading(false);}}
