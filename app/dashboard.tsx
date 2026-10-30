@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import NotificationBell from "./components/notification-bell";
+import { createClient } from "@/lib/supabase/client";
 import "./dashboard.css";
 import {
   BusFront, CalendarDays, ChevronDown, ChevronRight,
@@ -42,19 +43,27 @@ const activities = [
 
 export default function Home() {
   const router = useRouter();
+  const [role,setRole] = useState("pending");
+  const [profileName,setProfileName] = useState("Usuário");
+  const [churchName,setChurchName] = useState("Minha igreja");
+  const roleLabels:Record<string,string>={admin:"Administrador geral",pastor:"Pastor",leader:"Líder de grupo",driver:"Motorista",director:"Dirigente",preacher:"Pregador",musician:"Músico"};
+  const rolePages:Record<string,string[]>={admin:navItems.map(x=>x.label),pastor:["Visão geral","Igrejas e regiões","Cultos e programação","Músicas e repertório","Viagens e ônibus","Mapa ao vivo","Evangelismo","Mensagens e avisos","Relatórios","Documentos e logos","Configurações"],leader:["Visão geral","Viagens e ônibus","Mapa ao vivo","Evangelismo","Mensagens e avisos"],driver:["Visão geral","Viagens e ônibus","Mapa ao vivo","Mensagens e avisos"],director:["Visão geral","Cultos e programação","Músicas e repertório","Mensagens e avisos"],preacher:["Visão geral","Cultos e programação","Mensagens e avisos"],musician:["Visão geral","Cultos e programação","Músicas e repertório","Mensagens e avisos"]};
   const [active, setActive] = useState("Visão geral");
   const navigate = (label:string) => { const paths:Record<string,string>={"Visão geral":"/painel","Igrejas e regiões":"/painel/igrejas","Usuários e equipes":"/painel/usuarios","Cultos e programação":"/painel/programacao","Músicas e repertório":"/painel/musicas","Viagens e ônibus":"/painel/viagens","Mapa ao vivo":"/painel/mapa","Evangelismo":"/painel/evangelismo","Mensagens e avisos":"/painel/mensagens","Relatórios":"/painel/relatorios","Documentos e logos":"/painel/documentos","Configurações":"/painel/configuracoes"}; setActive(label); setMobileOpen(false); router.push(paths[label]||"/painel"); };
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showWelcome, setShowWelcome] = useState(true);
+  useEffect(()=>{(async()=>{const db=createClient();const {data:{user}}=await db.auth.getUser();if(!user)return;const {data:p}=await db.from("profiles").select("full_name,role").eq("id",user.id).single();if(p){setRole(p.role);setProfileName(p.full_name||"Usuário");if(p.role==="admin")setChurchName("Todas as regiões");else{const {data:c}=await db.from("churches").select("name").limit(1).maybeSingle();if(c?.name)setChurchName(c.name);}}})();},[]);
+  const visibleNavItems=rolePages[role]||["Visão geral"];
+  const initials=profileName.split(" ").filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
 
   const grouped = useMemo(() => {
-    const filtered = navItems.filter((item) => item.label.toLowerCase().includes(search.toLowerCase()));
+    const filtered = navItems.filter((item) => visibleNavItems.includes(item.label) && item.label.toLowerCase().includes(search.toLowerCase()));
     return [...new Set(filtered.map((item) => item.group))].map((group) => ({
       group,
       items: filtered.filter((item) => item.group === group),
     }));
-  }, [search]);
+  }, [search,role]);
 
   const current = navItems.find((item) => item.label === active) ?? navItems[0];
   const isOverview = active === "Visão geral";
@@ -70,7 +79,7 @@ export default function Home() {
         </div>
         <div className="workspace-switch">
           <div className="workspace-icon"><Church size={18}/></div>
-          <div className="workspace-copy"><strong>Administração geral</strong><span>Todas as regiões</span></div>
+          <div className="workspace-copy"><strong>{role==="admin"?"Administração geral":churchName}</strong><span>{roleLabels[role]||"Área autorizada"}</span></div>
           <ChevronDown size={16} className="muted-icon"/>
         </div>
         <label className="sidebar-search"><Search size={16}/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar página..." /></label>
@@ -90,7 +99,7 @@ export default function Home() {
         <div className="sidebar-bottom">
           <div className="security-note"><ShieldCheck size={17}/><div><strong>Acesso protegido</strong><span>Área administrativa</span></div></div>
           <button className="profile-row" onClick={() => navigate("Configurações")}>
-            <div className="avatar avatar-admin">AD</div><div className="profile-copy"><strong>Administrador</strong><span>Administrador geral</span></div><MoreHorizontal size={18}/>
+            <div className="avatar avatar-admin">{initials}</div><div className="profile-copy"><strong>{profileName}</strong><span>{roleLabels[role]||"Usuário"}</span></div><MoreHorizontal size={18}/>
           </button>
         </div>
       </aside>
@@ -102,16 +111,16 @@ export default function Home() {
             <div className="breadcrumb">CHAMA VIVA <ChevronRight size={14}/> <strong>{active}</strong></div>
           </div>
           <div className="topbar-actions">
-            <div className="today-label"><CalendarDays size={16}/> Sexta-feira, 30 de outubro</div>
+            <div className="today-label"><CalendarDays size={16}/> {new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}</div>
             <NotificationBell/>
-            <div className="avatar avatar-admin top-avatar">AD</div>
+            <div className="avatar avatar-admin top-avatar">{initials}</div>
           </div>
         </header>
 
         <div className="page-content">
           {isOverview ? <>
             {showWelcome && <section className="welcome-banner">
-              <div className="welcome-copy"><span className="eyebrow"><Flame size={14}/> PAINEL ADMINISTRATIVO</span><h1>Olá! Bem-vindo ao <em>CHAMA VIVA.</em></h1><p>Uma visão completa das igrejas, programações e equipes em um só lugar.</p></div>
+              <div className="welcome-copy"><span className="eyebrow"><Flame size={14}/> PAINEL ADMINISTRATIVO</span><h1>Olá, {profileName.split(" ")[0]}! Bem-vindo ao <em>CHAMA VIVA.</em></h1><p>Uma visão completa das igrejas, programações e equipes em um só lugar.</p></div>
               <div className="welcome-art"><div className="art-ring ring-one"/><div className="art-ring ring-two"/><Flame size={82} strokeWidth={1.15}/></div>
               <button className="banner-close" onClick={() => setShowWelcome(false)} aria-label="Fechar boas-vindas"><X size={17}/></button>
             </section>}
