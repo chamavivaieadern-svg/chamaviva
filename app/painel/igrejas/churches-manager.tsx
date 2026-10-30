@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Church, Plus, Pencil, Save, X, Users, MapPin, RefreshCw, Trash2, UserPlus } from "lucide-react";
 
@@ -32,7 +33,7 @@ export default function ChurchesManager(){
  const grouped=useMemo(()=>{const map=new Map<string,ChurchRow[]>();rows.forEach(c=>{const key=c.region?.trim()||"Sem região definida";map.set(key,[...(map.get(key)||[]),c]);});return [...map.entries()];},[rows]);
  const log=async(action:string,target:string,details:Record<string,unknown>)=>{const {data:{user}}=await db.auth.getUser();if(user)await db.from("audit_logs").insert({actor_id:user.id,action,target_table:"churches",target_id:target,details});};
  function startEdit(c?:ChurchRow){setForm(c?{name:c.name,region:c.region||"",city:c.city||"",state:c.state||"",address:c.address||"",pastor_id:c.pastor_id||""}:empty);setAdding(!c);setEditing(!!c);setError("");setNotice("");}
- async function save(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");setNotice("");try{const payload={name:form.name.trim(),region:form.region.trim()||null,city:form.city.trim()||null,state:form.state.trim().toUpperCase()||null,address:form.address.trim()||null,pastor_id:form.pastor_id||null};if(!payload.name)throw new Error("Informe o nome da igreja.");
+ async function save(e:FormEvent){e.preventDefault();setBusy(true);setError("");setNotice("");try{const payload={name:form.name.trim(),region:form.region.trim()||null,city:form.city.trim()||null,state:form.state.trim().toUpperCase()||null,address:form.address.trim()||null,pastor_id:form.pastor_id||null};if(!payload.name)throw new Error("Informe o nome da igreja.");
   let result;let churchId=chosen?.id||"";
   if(editing&&chosen)result=await db.from("churches").update(payload).eq("id",chosen.id);
   else {const inserted=await db.from("churches").insert({...payload,created_by:(await db.auth.getUser()).data.user?.id}).select("id").single();result=inserted;if(inserted.data)churchId=inserted.data.id;}
