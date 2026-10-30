@@ -25,8 +25,8 @@ export default function LocationMap(){
   if(alive)setRoutes(lines.filter((x):x is RouteLine=>x!==null));
  })();return()=>{alive=false;};},[]);
  const latest=useMemo(()=>{const seen=new Set<string>();return points.filter(p=>{const key=p.trip_id?"trip:"+p.trip_id:"group:"+p.group_id;if(seen.has(key))return false;seen.add(key);return true;});},[points]);
- const first=latest[0];const firstCross=crosses.find(c=>c.latitude!==null&&c.longitude!==null);
- const center:[number,number]=first?[first.latitude,first.longitude]:firstCross?[firstCross.latitude!,firstCross.longitude!]:[-15.7939,-47.8828];
+ const first=latest[0];const firstCross=crosses.find(c=>c.latitude!==null&&c.longitude!==null);const firstRoute=routes[0]?.positions[0];
+ const center:[number,number]=first?[first.latitude,first.longitude]:firstCross?[firstCross.latitude!,firstCross.longitude!]:firstRoute||[-15.7939,-47.8828];
  return <section className="live-map-card"><div className="live-map-head"><div><b>Mapa de operações</b><small>Última posição recebida de cada ônibus e grupo</small></div><span><i/> ATUALIZAÇÃO AO VIVO</span></div>
   {error&&<p className="module-error">{error}</p>}
   <MapContainer center={center} zoom={12} scrollWheelZoom style={{height:360,width:"100%",borderRadius:12}}>
