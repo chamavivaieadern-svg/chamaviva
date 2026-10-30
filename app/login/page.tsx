@@ -20,10 +20,11 @@ export default function LoginPage() {
       const supabase = createClient();
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const hasTotp = factors?.totp?.some(f => f.status === "verified");
+      if (!hasTotp) { router.push("/seguranca/2fa"); return; }
       const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (assurance.nextLevel === "aal2" && assurance.currentLevel !== "aal2") {
-        router.push("/seguranca/2fa"); return;
-      }
+      if (assurance.currentLevel !== "aal2") { router.push("/seguranca/2fa"); return; }
       router.push(params.get("next") || "/painel"); router.refresh();
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível entrar."); }
     finally { setBusy(false); }
