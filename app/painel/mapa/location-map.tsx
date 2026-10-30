@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
-import {MapContainer,TileLayer,CircleMarker,Popup,Polyline,useMap} from "react-leaflet";
+import {MapContainer,TileLayer,CircleMarker,Popup,useMap} from "react-leaflet";
 import {createClient} from "@/lib/supabase/client";
 
 type Point={id:string;trip_id:string|null;group_id:string|null;latitude:number;longitude:number;recorded_at:string};
@@ -10,7 +10,7 @@ export default function LocationMap(){
  const [points,setPoints]=useState<Point[]>([]),[crosses,setCrosses]=useState<Cross[]>([]),[error,setError]=useState("");
  useEffect(()=>{const db=createClient();let alive=true;
   async function load(){const [p,c]=await Promise.all([db.from("live_locations").select("id,trip_id,group_id,latitude,longitude,recorded_at").order("recorded_at",{ascending:false}).limit(500),db.from("crossada_locations").select("id,name,latitude,longitude,address")]);if(!alive)return;if(p.error)setError(p.error.message);else setPoints(p.data||[]);if(!c.error)setCrosses(c.data||[]);}
-  load();const channel=db.channel("chama-live-locations").on("postgres_changes",{event:"INSERT",schema:"public",table:"live_locations"},()=>load()).subscribe();
+  load();const channel=db.channel("chama-live-locations").on("postgres_changes",{event:"INSERT",schema:"public",table:"live_locations"},()=>load()).on("postgres_changes",{event:"INSERT",schema:"public",table:"crossada_locations"},()=>load()).subscribe();
   return()=>{alive=false;db.removeChannel(channel);};
  },[]);
  const latest=useMemo(()=>{const seen=new Set<string>();return points.filter(p=>{const key=p.trip_id?"trip:"+p.trip_id:"group:"+p.group_id;if(seen.has(key))return false;seen.add(key);return true;});},[points]);
