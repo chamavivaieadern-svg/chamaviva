@@ -1,4 +1,5 @@
 "use client";
+import type { FormEvent } from "react";
 import {useEffect,useState} from "react";
 import {createClient} from "@/lib/supabase/client";
 import {Users,UserPlus,BusFront,CheckCircle2,AlertCircle,Trash2} from "lucide-react";
@@ -14,7 +15,7 @@ export default function TripPassengers(){
  useEffect(()=>{load();},[]);
  useEffect(()=>{loadPassengers(tripId);},[tripId]);
  const trip=trips.find(t=>t.id===tripId);const vehicle=vehicles.find(v=>v.id===trip?.vehicle_id);const capacity=vehicle?.capacity||0;
- async function add(e:React.FormEvent){e.preventDefault();if(capacity&&people.length>=capacity){setError("A lista atingiu a capacidade do veículo.");return;}setBusy(true);setError("");setSuccess("");const db=createClient();const {error}=await db.from("trip_passengers").insert({trip_id:tripId,full_name:name.trim(),notes:notes||null});if(error)setError(error.message);else{setName("");setNotes("");setSuccess("Passageiro adicionado.");loadPassengers(tripId);}setBusy(false);}
+ async function add(e:FormEvent){e.preventDefault();if(capacity&&people.length>=capacity){setError("A lista atingiu a capacidade do veículo.");return;}setBusy(true);setError("");setSuccess("");const db=createClient();const {error}=await db.from("trip_passengers").insert({trip_id:tripId,full_name:name.trim(),notes:notes||null});if(error)setError(error.message);else{setName("");setNotes("");setSuccess("Passageiro adicionado.");loadPassengers(tripId);}setBusy(false);}
  async function status(id:string,value:string){const db=createClient();const {error}=await db.from("trip_passengers").update({boarding_status:value}).eq("id",id);if(error)setError(error.message);else loadPassengers(tripId);}
  async function remove(id:string){if(!confirm("Remover passageiro desta lista?"))return;const db=createClient();const {error}=await db.from("trip_passengers").delete().eq("id",id);if(error)setError(error.message);else loadPassengers(tripId);}
  return <section className="passenger-panel"><div className="passenger-head"><div><b><Users size={16}/> Lista de passageiros</b><small>Controle de vagas, embarque e desembarque.</small></div><span>{people.length}{capacity?"/"+capacity:""} vagas</span></div>
