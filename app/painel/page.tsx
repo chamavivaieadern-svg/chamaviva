@@ -6,9 +6,11 @@ export default async function ProtectedDashboard() {
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user) redirect("/login");
-  const {data:profile}=await supabase.from("profiles").select("full_name,role,status").eq("id",user.id).maybeSingle();
-  if(profile?.status==="blocked") redirect("/login?blocked=1");
+  const {data:profile}=await supabase.from("profiles").select("role,status").eq("id",user.id).maybeSingle();
+  if(!profile || profile.status!=="active" || profile.role==="pending") redirect("/aguardando");
+  const {data:factors}=await supabase.auth.mfa.listFactors();
+  const hasTotp=factors?.totp?.some(f=>f.status==="verified");
   const {data:assurance}=await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  if(assurance.nextLevel==="aal2"&&assurance.currentLevel!=="aal2") redirect("/seguranca/2fa");
+  if(!hasTotp || assurance.currentLevel!=="aal2") redirect("/seguranca/2fa");
   return <Home/>;
 }
