@@ -30,4 +30,4 @@ Sistema de gestão de igrejas, cultos, viagens, comunicação e equipes de evang
 - Não publique com dados demonstrativos como se fossem dados reais.
 
 ## Estado
-O repositório contém a interface inicial, rotas de login/MFA, clientes Supabase e primeira migration de dados. Mapas/GPS, PDFs, e-mail transacional e telas CRUD ainda exigem implementação e validação com as credenciais do projeto.
+O repositório contém o painel inicial protegido, login e MFA TOTP, convites e gestão administrativa de usuários, páginas de módulos com leitura/criação inicial de registros, migrations com RLS, formulários de igrejas/eventos/músicas/viagens/grupos/mensagens/documentos, mapa OpenStreetMap e envio de GPS mediante consentimento. PDF final, e-mail transacional, relatórios completos, cronograma detalhado do culto e rastreamento confiável em segundo plano ainda precisam ser concluídos e testados com as credenciais do projeto.
