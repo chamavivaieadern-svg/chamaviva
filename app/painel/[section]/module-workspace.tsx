@@ -34,7 +34,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  }catch(e){setError(e instanceof Error?e.message:"Não foi possível carregar os dados.");}finally{setLoading(false);}}
  useEffect(()=>{load();},[section]);
  const Icon=config.icon==="church"?Church:config.icon==="calendar"?CalendarDays:config.icon==="music"?Music2:config.icon==="bus"?BusFront:config.icon==="users"?Users:config.icon==="message"?MessageSquare:config.icon==="file"?FileText:MapPin;
- async function approve(id:unknown,status:string){const db=createClient();const {data:{user}}=await db.auth.getUser();const {error}=await db.from("songs").update({status,reviewed_by:user?.id,reviewed_at:new Date().toISOString()}).eq("id",String(id));if(error)setError(error.message);else load();}
+ async function approve(id:unknown,status:string){const db=createClient();const {error}=await db.rpc("review_song",{target_song:String(id),decision:status});if(error)setError(error.message);else load();}
  return <main className="module-page"><div className="workspace-head"><div className="workspace-icon-large"><Icon size={24}/></div><div><span className="auth-kicker">CHAMA VIVA • MÓDULO</span><h1>{config.title}</h1><p>{config.description}</p></div><button className="module-refresh" onClick={load}><RefreshCw size={15}/> Atualizar</button></div>
  {section!=="relatorios"&&section!=="configuracoes"&&<ModuleActions section={section} onCreated={load}/>}
  {section==="programacao"&&<ProgramBuilder/>}
