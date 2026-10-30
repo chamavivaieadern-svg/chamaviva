@@ -44,8 +44,8 @@ export default function ProgramBuilder(){
    const event=payload.event as EventRow;
    const pdfItems=payload.items as Item[];
    const logos=payload.logos as {label:string;storage_path:string;is_official:boolean;url:string}[];
-   const pdf=new jsPDF({unit:"mm",format:"a4"});let y=15;
-   for(const asset of logos){try{const data=await imageData(asset.url);pdf.addImage(data,data.startsWith("data:image/jpeg")?"JPEG":"PNG",14,y,25,18,"","FAST");}catch{/* logo opcional */}}
+   const pdf=new jsPDF({unit:"mm",format:"a4"});let y=15;let logoX=14;
+   for(const asset of logos){try{const data=await imageData(asset.url);pdf.addImage(data,data.startsWith("data:image/jpeg")?"JPEG":"PNG",logoX,y,25,18,"","FAST");logoX+=29;}catch{/* logo opcional */}}
    pdf.setTextColor(185,75,22);pdf.setFont("helvetica","bold");pdf.setFontSize(18);pdf.text("CHAMA VIVA",pdf.internal.pageSize.getWidth()-14,22,{align:"right"});
    y=43;pdf.setTextColor(40,30,24);pdf.setFontSize(16);pdf.text(event.title,14,y);y+=8;
    pdf.setFont("helvetica","normal");pdf.setFontSize(10);pdf.text("Data: "+new Date(event.starts_at).toLocaleString("pt-BR"),14,y);y+=6;if(event.venue){pdf.text("Local: "+event.venue,14,y);y+=6;}
