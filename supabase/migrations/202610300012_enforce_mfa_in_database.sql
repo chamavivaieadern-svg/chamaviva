@@ -44,6 +44,11 @@ create policy "passengers read after MFA" on public.trip_passengers for select t
  or exists(select 1 from public.trips t where t.id=trip_id and (t.driver_id=auth.uid() or (public.is_active_member(t.church_id) and public.has_role(array['pastor'])))))
 );
 
+drop policy if exists "admin pastor driver update passengers" on public.trip_passengers;
+create policy "admin pastor driver update passengers after MFA" on public.trip_passengers for all to authenticated
+using(public.has_aal2() and (public.is_admin() or exists(select 1 from public.trips t where t.id=trip_id and (t.driver_id=auth.uid() or (public.is_active_member(t.church_id) and public.has_role(array['pastor']))))))
+with check(public.has_aal2() and (public.is_admin() or exists(select 1 from public.trips t where t.id=trip_id and (t.driver_id=auth.uid() or (public.is_active_member(t.church_id) and public.has_role(array['pastor']))))));
+
 drop policy if exists "groups visible by pastor leader or assigned driver" on public.evangelism_groups;
 create policy "groups visible after MFA" on public.evangelism_groups for select to authenticated using(
  public.has_aal2() and (public.is_admin()
