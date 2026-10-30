@@ -22,8 +22,8 @@ export default function LocationControls(){
   setBusy(true);setMessage("");
   try{
    const initial=await new Promise<GeolocationPosition>((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,maximumAge:5000,timeout:20000}));
-   const db=createClient();const rpc=await db.rpc(kind==="trip"?"start_trip_tracking":"start_group_sharing",kind==="trip"?{target_trip:id}:{target_group:id});
-   if(rpc.error)throw rpc.error;
+   const db=createClient();const alreadyActive=kind==="trip"?trips.some(t=>t.id===id&&t.status==="in_progress"):groups.some(g=>g.id===id&&g.status==="active");
+   if(!alreadyActive){const rpc=await db.rpc(kind==="trip"?"start_trip_tracking":"start_group_sharing",kind==="trip"?{target_trip:id}:{target_group:id});if(rpc.error)throw rpc.error;}
    setActive({kind,id,label});lastSent.current=Date.now();
    const {data:{user}}=await db.auth.getUser();if(user){
     const row={user_id:user.id,latitude:initial.coords.latitude,longitude:initial.coords.longitude,accuracy_m:initial.coords.accuracy,...(kind==="trip"?{trip_id:id}:{group_id:id})};
@@ -53,8 +53,8 @@ export default function LocationControls(){
  return <section className="gps-controls">
   <div className="gps-heading"><ShieldCheck size={18}/><div><b>Compartilhamento de localização</b><small>O GPS só é enviado após sua autorização e durante uma atividade ativa.</small></div></div>
   {active?<div className="gps-active"><span><i/> COMPARTILHAMENTO ATIVO</span><b>{active.label}</b><button onClick={stop} disabled={busy}><Square size={14} fill="currentColor"/> Encerrar e parar GPS</button></div>:<div className="gps-options">
-   <div className="gps-option"><div><BusFront size={18}/><b>Sou motorista</b></div><select value={selectedTrip} onChange={e=>setSelectedTrip(e.target.value)}><option value="">Selecione sua viagem</option>{trips.map(t=><option key={t.id} value={t.id}>{t.title} • {t.status}</option>)}</select><button disabled={!selectedTrip||busy} onClick={()=>{const t=trips.find(x=>x.id===selectedTrip);if(t)start("trip",t.id,t.title);}}><Radio size={15}/> Autorizar e iniciar viagem</button></div>
-   <div className="gps-option"><div><Users size={18}/><b>Sou líder de grupo</b></div><select value={selectedGroup} onChange={e=>setSelectedGroup(e.target.value)}><option value="">Selecione seu grupo</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name} • {g.status}</option>)}</select><button disabled={!selectedGroup||busy} onClick={()=>{const g=groups.find(x=>x.id===selectedGroup);if(g)start("group",g.id,g.name);}}><Radio size={15}/> Autorizar e iniciar evangelismo</button></div>
+   <div className="gps-option"><div><BusFront size={18}/><b>Sou motorista</b></div><select value={selectedTrip} onChange={e=>setSelectedTrip(e.target.value)}><option value="">Selecione sua viagem</option>{trips.map(t=><option key={t.id} value={t.id}>{t.title} • {t.status}</option>)}</select><button disabled={!selectedTrip||busy} onClick={()=>{const t=trips.find(x=>x.id===selectedTrip);if(t)start("trip",t.id,t.title);}}><Radio size={15}/> {trips.find(t=>t.id===selectedTrip)?.status==="in_progress"?"Retomar compartilhamento":"Autorizar e iniciar viagem"}</button></div>
+   <div className="gps-option"><div><Users size={18}/><b>Sou líder de grupo</b></div><select value={selectedGroup} onChange={e=>setSelectedGroup(e.target.value)}><option value="">Selecione seu grupo</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name} • {g.status}</option>)}</select><button disabled={!selectedGroup||busy} onClick={()=>{const g=groups.find(x=>x.id===selectedGroup);if(g)start("group",g.id,g.name);}}><Radio size={15}/> {groups.find(g=>g.id===selectedGroup)?.status==="active"?"Retomar compartilhamento":"Autorizar e iniciar evangelismo"}</button></div>
   </div>}
   {message&&<p className="gps-message"><Wifi size={14}/>{message}</p>}
   <p className="gps-note"><MapPin size={14}/> Para manter o envio, deixe o CHAMA VIVA aberto e com permissão de localização. Navegadores móveis podem suspender o GPS em segundo plano ou quando a tela é bloqueada.</p>
