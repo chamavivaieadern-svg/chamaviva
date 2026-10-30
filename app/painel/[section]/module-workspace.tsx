@@ -7,6 +7,7 @@ import ModuleActions from "./module-actions";
 import ProgramBuilder from "../programacao/program-builder";
 import TripPassengers from "../viagens/passengers";
 import VehicleManager from "../viagens/vehicle-manager";
+import TravelReports from "../relatorios/travel-reports";
 const LocationMap=dynamic(()=>import("../mapa/location-map"),{ssr:false,loading:()=> <div className="data-empty">Carregando mapa...</div>});
 import { RefreshCw,MapPin,BusFront,Users,CalendarDays,Music2,MessageSquare,FileText,Church,CheckCircle2,AlertCircle } from "lucide-react";
 
@@ -37,6 +38,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  {section==="programacao"&&<ProgramBuilder/>}
  {section==="viagens"&&<VehicleManager/>}
  {section==="viagens"&&<TripPassengers/>}
+ {section==="relatorios"&&<TravelReports/>}
  {section==="mapa"&&<LocationControls/>}
  {section==="mapa"&&<LocationMap/>}
  {section==="mapa"&&<div className="map-info-card"><MapPin size={19}/><div><b>Localização compartilhada com consentimento</b><p>As posições são registradas somente durante viagens ou evangelismos ativos. A tabela abaixo mostra o horário real da última atualização; não representa rastreamento em tempo real enquanto não houver um dispositivo enviando GPS.</p></div></div>}
