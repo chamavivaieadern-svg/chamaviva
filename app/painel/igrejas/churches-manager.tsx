@@ -38,6 +38,7 @@ export default function ChurchesManager(){
   if(editing&&chosen)result=await db.from("churches").update(payload).eq("id",chosen.id);
   else {const inserted=await db.from("churches").insert({...payload,created_by:(await db.auth.getUser()).data.user?.id}).select("id").single();result=inserted;if(inserted.data)churchId=inserted.data.id;}
   if(result.error)throw result.error;
+  if(editing&&chosen?.pastor_id&&chosen.pastor_id!==payload.pastor_id){const unlinked=await db.from("church_memberships").delete().eq("church_id",churchId).eq("user_id",chosen.pastor_id).eq("membership_role","pastor");if(unlinked.error)throw unlinked.error;}
   if(payload.pastor_id&&churchId){const linked=await db.from("church_memberships").upsert({church_id:churchId,user_id:payload.pastor_id,membership_role:"pastor"},{onConflict:"church_id,user_id"});if(linked.error)throw linked.error;}
   await log(editing?"church.updated":"church.created",churchId||payload.name,payload);setNotice(editing?"Igreja atualizada.":"Igreja cadastrada.");setEditing(false);setAdding(false);await load();
  }catch(e){setError(e instanceof Error?e.message:"Não foi possível salvar.");}finally{setBusy(false);}}
