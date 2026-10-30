@@ -1,4 +1,5 @@
 "use client";
+import type { FormEvent } from "react";
 import {useEffect,useState} from "react";
 import {createClient} from "@/lib/supabase/client";
 import {jsPDF} from "jspdf";
@@ -21,7 +22,7 @@ export default function ProgramBuilder(){
  async function loadItems(id:string){if(!id){setItems([]);return;}const db=createClient();const {data,error}=await db.from("program_items").select("id,title,participant_name,item_type,starts_at,duration_minutes,sort_order,notes").eq("event_id",id).order("sort_order");if(error)setError(error.message);else setItems(data||[]);}
  useEffect(()=>{loadEvents();},[]);
  useEffect(()=>{loadItems(eventId);},[eventId]);
- async function addItem(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");setMessage("");try{
+ async function addItem(e:FormEvent){e.preventDefault();setBusy(true);setError("");setMessage("");try{
   const db=createClient();const event=events.find(x=>x.id===eventId);if(!event)throw new Error("Selecione uma programação.");
   const date=new Date(event.starts_at);if(form.time){const [h,m]=form.time.split(":").map(Number);date.setHours(h,m,0,0);}
   const {error}=await db.from("program_items").insert({event_id:eventId,title:form.title,participant_name:form.participant_name||null,item_type:form.item_type,starts_at:form.time?date.toISOString():null,duration_minutes:form.duration_minutes?Number(form.duration_minutes):null,sort_order:items.length,notes:form.notes||null});
