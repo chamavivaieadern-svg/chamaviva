@@ -48,6 +48,7 @@ Em Site configuration > Environment variables, configure:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_ROUTING_URL` (opcional; configure um serviço OSRM compatível próprio para produção).
 
 Depois de salvar as variáveis, faça novo deploy. Não coloque segredos no prefixo `NEXT_PUBLIC_`.
 
