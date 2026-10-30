@@ -2,7 +2,7 @@ create or replace function public.validate_trip_assignments()
 returns trigger language plpgsql security definer set search_path=public
 as $$
 begin
- if new.driver_id is not null and not exists(select 1 from public.church_memberships m where m.user_id=new.driver_id and m.church_id=new.church_id) then
+ if new.driver_id is not null and not exists(select 1 from public.church_memberships m join public.profiles p on p.id=m.user_id where m.user_id=new.driver_id and m.church_id=new.church_id and p.role='driver' and p.status='active') then
   raise exception 'O motorista precisa estar vinculado à mesma igreja da viagem.';
  end if;
  if new.vehicle_id is not null and not exists(select 1 from public.vehicles v where v.id=new.vehicle_id and v.church_id=new.church_id) then
@@ -17,7 +17,7 @@ create or replace function public.validate_group_assignments()
 returns trigger language plpgsql security definer set search_path=public
 as $$
 begin
- if not exists(select 1 from public.church_memberships m where m.user_id=new.leader_id and m.church_id=new.church_id) then
+ if not exists(select 1 from public.church_memberships m join public.profiles p on p.id=m.user_id where m.user_id=new.leader_id and m.church_id=new.church_id and p.role='leader' and p.status='active') then
   raise exception 'O líder precisa estar vinculado à mesma igreja do grupo.';
  end if;
  if new.trip_id is not null and not exists(select 1 from public.trips t where t.id=new.trip_id and t.church_id=new.church_id) then
