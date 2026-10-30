@@ -14,6 +14,7 @@ No SQL Editor, execute as migrations em ordem:
 5. `202610300005_privacy_and_role_scoping.sql`
 6. `202610300006_notifications.sql`
 7. `202610300007_linked_group_bus_visibility.sql`
+8. `202610300008_email_alerts.sql`
 
 Confirme que as tabelas estão com RLS habilitado. Em Authentication > Providers, habilite e-mail. Em Authentication > Multi-Factor Authentication, habilite TOTP. Defina a URL do site e as Redirect URLs para o domínio Netlify de produção e para o domínio de preview que você realmente utilizar.
 
@@ -49,7 +50,17 @@ Em Site configuration > Environment variables, configure:
 
 Depois de salvar as variáveis, faça novo deploy. Não coloque segredos no prefixo `NEXT_PUBLIC_`.
 
-## 4. Testes antes de produção
+
+## 4. E-mails de avisos importantes
+O repositório inclui a Edge Function `send-notification-email`. Para ativá-la:
+1. Verifique um domínio de envio no Resend.
+2. Instale e autentique a Supabase CLI no seu computador.
+3. Execute `supabase functions deploy send-notification-email`.
+4. Cadastre os secrets da função: `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `EMAIL_FROM` (por exemplo, `CHAMA VIVA <avisos@seudominio.com>`) e `EMAIL_WEBHOOK_SECRET` (uma senha aleatória longa).
+5. No Supabase Dashboard > Database > Webhooks, crie um webhook para INSERT em `public.notifications`, apontando para `https://SEU-PROJETO.supabase.co/functions/v1/send-notification-email`. Envie o header `x-webhook-secret` com o mesmo valor de `EMAIL_WEBHOOK_SECRET`.
+6. Faça um teste com uma notificação marcada `send_email=true`. Alertas importantes de novas letras, revisão de letras, viagens atribuídas e programação publicada estão marcados para e-mail. Mensagens particulares permanecem somente internas.
+
+## 5. Testes antes de produção
 Crie contas de teste para cada perfil e confirme:
 - Usuário não autenticado não acessa /painel.
 - Usuário pendente/bloqueado não entra.
@@ -62,5 +73,5 @@ Crie contas de teste para cada perfil e confirme:
 - Motorista, pastor e líder veem somente os locais autorizados.
 - PDF, e-mail e upload são testados com arquivos e contas reais antes de liberar.
 
-## 5. Limites conhecidos da localização web
+## 6. Limites conhecidos da localização web
 A página de mapa usa OpenStreetMap e recebe novos registros por Supabase Realtime. O compartilhamento de localização usa a Geolocation API do navegador e exige HTTPS, permissão explícita e a página aberta. Navegadores móveis podem suspender a página quando o aparelho bloqueia a tela ou o sistema economiza bateria. Para rastreamento confiável em segundo plano durante longos trajetos, será necessário um aplicativo móvel nativo ou PWA com suporte específico de background location, além de testes em Android/iOS.
