@@ -1,4 +1,5 @@
 "use client";
+import type { FormEvent } from "react";
 import {useEffect,useState} from "react";
 import {createClient} from "@/lib/supabase/client";
 import {Plus,Upload,Send,CalendarPlus,MapPin,Music2,BusFront,Users,Church} from "lucide-react";
@@ -18,7 +19,7 @@ export default function ModuleActions({section,onCreated}:{section:string;onCrea
  const [role,setRole]=useState("");
  useEffect(()=>{(async()=>{const db=createClient();const {data:{user}}=await db.auth.getUser();if(user){const {data}=await db.from("profiles").select("role").eq("id",user.id).single();setRole(data?.role||"");}})();},[]);
  if(!allowed[section]?.includes(role))return null;
- async function submit(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");setSuccess("");
+ async function submit(e:FormEvent){e.preventDefault();setBusy(true);setError("");setSuccess("");
   try{const db=createClient();let result;
    if(section==="igrejas")result=await db.from("churches").insert({name:form.name,region:form.region||null,city:form.city||null,address:form.address||null,created_by:userId});
    if(section==="programacao")result=await db.from("events").insert({church_id:form.church_id,title:form.title,event_type:form.event_type,starts_at:new Date(form.starts_at).toISOString(),venue:form.venue||null,description:form.description||null,created_by:userId});
