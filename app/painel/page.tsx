@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import Home from "../page";
+import Home from "../dashboard";
 
 export default async function ProtectedDashboard() {
   const supabase=await createClient();
