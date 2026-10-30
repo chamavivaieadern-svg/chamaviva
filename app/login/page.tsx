@@ -1,13 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Flame, LockKeyhole, Mail } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const params = useSearchParams();
   const blocked = params.get("blocked") === "1";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +24,7 @@ export default function LoginPage() {
       if (!hasTotp) { router.push("/seguranca/2fa"); return; }
       const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       if (assurance.currentLevel !== "aal2") { router.push("/seguranca/2fa"); return; }
-      router.push(params.get("next") || "/painel"); router.refresh();
+      router.push(new URLSearchParams(window.location.search).get("next") || "/painel"); router.refresh();
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível entrar."); }
     finally { setBusy(false); }
   }
