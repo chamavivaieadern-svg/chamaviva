@@ -14,6 +14,7 @@ export default function TripPassengers(){
  async function loadPassengers(id:string){if(!id){setPeople([]);return;}const db=createClient();const {data,error}=await db.from("trip_passengers").select("id,full_name,boarding_status,notes").eq("trip_id",id).order("created_at");if(error)setError(error.message);else setPeople(data||[]);}
  useEffect(()=>{load();},[]);
  useEffect(()=>{loadPassengers(tripId);},[tripId]);
+ useEffect(()=>{if(!tripId)return;const db=createClient();const channel=db.channel("passengers-live-"+tripId).on("postgres_changes",{event:"*",schema:"public",table:"trip_passengers",filter:"trip_id=eq."+tripId},()=>loadPassengers(tripId)).subscribe();return()=>{db.removeChannel(channel);};},[tripId]);
  const trip=trips.find(t=>t.id===tripId);const vehicle=vehicles.find(v=>v.id===trip?.vehicle_id);const capacity=vehicle?.capacity||0;
  async function add(e:FormEvent){e.preventDefault();if(capacity&&people.length>=capacity){setError("A lista atingiu a capacidade do veículo.");return;}setBusy(true);setError("");setSuccess("");const db=createClient();const {error}=await db.from("trip_passengers").insert({trip_id:tripId,full_name:name.trim(),notes:notes||null});if(error)setError(error.message);else{setName("");setNotes("");setSuccess("Passageiro adicionado.");loadPassengers(tripId);}setBusy(false);}
  async function status(id:string,value:string){const db=createClient();const {error}=await db.from("trip_passengers").update({boarding_status:value}).eq("id",id);if(error)setError(error.message);else loadPassengers(tripId);}
