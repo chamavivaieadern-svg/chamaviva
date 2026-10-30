@@ -26,7 +26,7 @@ export default function LoginPage() {
       const hasTotp = factors?.totp?.some(f => f.status === "verified");
       if (!hasTotp) { router.push("/seguranca/2fa"); return; }
       const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (assurance.currentLevel !== "aal2") { router.push("/seguranca/2fa"); return; }
+      if (!assurance || assurance.currentLevel !== "aal2") { router.push("/seguranca/2fa"); return; }
       const next = new URLSearchParams(window.location.search).get("next");
       router.push(next?.startsWith("/") && !next.startsWith("//") ? next : "/painel"); router.refresh();
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível entrar."); }
