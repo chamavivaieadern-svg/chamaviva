@@ -6,7 +6,7 @@ import {jsPDF} from "jspdf";
 import {Plus,ArrowUp,ArrowDown,Trash2,FileDown,CheckCircle2} from "lucide-react";
 
 type EventRow={id:string;title:string;starts_at:string;venue:string|null;status:string};
-type Item={id:string;title:string;participant_name:string|null;item_type:string;starts_at:string|null;duration_minutes:number|null;sort_order:number;notes:string|null};
+type Item={id:string;title:string;participant_name:string|null;item_type:string;starts_at:string|null;duration_minutes:number|null;sort_order:number;notes:string|null;lyrics:string|null};
 type Asset={label:string;storage_path:string;is_official:boolean};
 async function imageData(url:string):Promise<string>{const response=await fetch(url);const blob=await response.blob();return await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(blob);});}
 export default function ProgramBuilder(){
@@ -19,7 +19,7 @@ export default function ProgramBuilder(){
   const {data:e}=await db.from("events").select("id,title,starts_at,venue,status").order("starts_at",{ascending:true});setEvents(e||[]);
   if(e?.length&&!eventId)setEventId(e[0].id);
  }
- async function loadItems(id:string){if(!id){setItems([]);return;}const db=createClient();const {data,error}=await db.from("program_items").select("id,title,participant_name,item_type,starts_at,duration_minutes,sort_order,notes").eq("event_id",id).order("sort_order");if(error)setError(error.message);else setItems(data||[]);}
+ async function loadItems(id:string){if(!id){setItems([]);return;}const db=createClient();const {data,error}=await db.from("program_items").select("id,title,participant_name,item_type,starts_at,duration_minutes,sort_order,notes,lyrics").eq("event_id",id).order("sort_order");if(error)setError(error.message);else setItems(data||[]);}
  useEffect(()=>{loadEvents();},[]);
  useEffect(()=>{loadItems(eventId);},[eventId]);
  async function addItem(e:FormEvent){e.preventDefault();setBusy(true);setError("");setMessage("");try{
@@ -71,7 +71,7 @@ export default function ProgramBuilder(){
    <label className="program-notes">Observações<input value={form.notes} onChange={e=>setForm(v=>({...v,notes:e.target.value}))} placeholder="Orientações para o participante"/></label>
   </div><button className="module-primary" disabled={busy}><Plus size={15}/> Adicionar à ordem</button></form>
   <div className="program-order"><div className="program-order-head"><b>Ordem oficial</b><small>{items.length} participação(ões)</small></div>
-   {items.length===0?<p className="data-empty">Nenhuma participação cadastrada para este evento.</p>:items.map((item,i)=><div className="program-row" key={item.id}><span className="program-number">{String(i+1).padStart(2,"0")}</span><div className="program-row-main"><b>{item.title}</b><small>{item.participant_name||"Responsável a definir"} • {item.starts_at?new Date(item.starts_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"Horário a definir"}{item.duration_minutes?" • "+item.duration_minutes+" min":""}</small>{item.notes&&<small>{item.notes}</small>}</div><div className="program-row-actions"><button onClick={()=>move(item,i,-1)} disabled={i===0} title="Subir"><ArrowUp size={14}/></button><button onClick={()=>move(item,i,1)} disabled={i===items.length-1} title="Descer"><ArrowDown size={14}/></button><button className="danger-action" onClick={()=>remove(item.id)} title="Remover"><Trash2 size={14}/></button></div></div>)}
+   {items.length===0?<p className="data-empty">Nenhuma participação cadastrada para este evento.</p>:items.map((item,i)=><div className="program-row" key={item.id}><span className="program-number">{String(i+1).padStart(2,"0")}</span><div className="program-row-main"><b>{item.title}</b><small>{item.participant_name||"Responsável a definir"} • {item.starts_at?new Date(item.starts_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"Horário a definir"}{item.duration_minutes?" • "+item.duration_minutes+" min":""}</small>{item.notes&&<small>{item.notes}</small>}{item.lyrics&&<details className="program-lyrics"><summary>Ver letra aprovada</summary><p>{item.lyrics}</p></details>}</div><div className="program-row-actions"><button onClick={()=>move(item,i,-1)} disabled={i===0} title="Subir"><ArrowUp size={14}/></button><button onClick={()=>move(item,i,1)} disabled={i===items.length-1} title="Descer"><ArrowDown size={14}/></button><button className="danger-action" onClick={()=>remove(item.id)} title="Remover"><Trash2 size={14}/></button></div></div>)}
   </div></>}
   {error&&<p className="module-error">{error}</p>}{message&&<p className="module-success"><CheckCircle2 size={14}/>{message}</p>}
  </section>;
