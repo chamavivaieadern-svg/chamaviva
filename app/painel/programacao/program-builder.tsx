@@ -21,6 +21,7 @@ export default function ProgramBuilder(){
  async function loadItems(id:string){if(!id){setItems([]);return;}const db=createClient();const {data,error}=await db.from("program_items").select("id,title,participant_name,item_type,starts_at,duration_minutes,sort_order,notes,lyrics").eq("event_id",id).order("sort_order");if(error)setError(error.message);else setItems(data||[]);}
  useEffect(()=>{loadEvents();},[]);
  useEffect(()=>{loadItems(eventId);},[eventId]);
+ useEffect(()=>{const db=createClient();const channel=db.channel("program-live-"+eventId).on("postgres_changes",{event:"*",schema:"public",table:"program_items",filter:"event_id=eq."+eventId},()=>loadItems(eventId)).on("postgres_changes",{event:"*",schema:"public",table:"events",filter:"id=eq."+eventId},()=>loadEvents()).subscribe();return()=>{db.removeChannel(channel);};},[eventId]);
  async function addItem(e:FormEvent){e.preventDefault();setBusy(true);setError("");setMessage("");try{
   const db=createClient();const event=events.find(x=>x.id===eventId);if(!event)throw new Error("Selecione uma programação.");
   const date=new Date(event.starts_at);if(form.time){const [h,m]=form.time.split(":").map(Number);date.setHours(h,m,0,0);}
