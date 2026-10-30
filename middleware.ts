@@ -24,10 +24,6 @@ export async function middleware(request: NextRequest) {
     const login = request.nextUrl.clone(); login.pathname = "/login"; login.searchParams.set("next", path);
     return NextResponse.redirect(login);
   }
-  if (user && path === "/login") {
-    const home = request.nextUrl.clone(); home.pathname = "/painel";
-    return NextResponse.redirect(home);
-  }
   return response;
 }
 
