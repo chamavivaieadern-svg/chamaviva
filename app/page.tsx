@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";\nimport "./dashboard.css";
+import { useMemo, useState } from "react";
+import "./dashboard.css";
 import {
   Bell, BusFront, CalendarDays, ChevronDown, ChevronRight,
   Church, Compass, FileText, Flame, LayoutDashboard,
