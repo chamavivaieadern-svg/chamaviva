@@ -34,7 +34,7 @@ export default function ModuleWorkspace({section}:{section:string}){
   let query=db.from(config.table).select(config.columns.join(",")).order(section==="mapa"?"recorded_at":"created_at",{ascending:false}).limit(100);
   if(section==="mensagens"&&user)query=query.or("sender_id.eq."+user.id+",recipient_id.eq."+user.id);
   const {data,error}=await query;if(error)throw error;
-  let records=(data||[]) as Record<string,unknown>[];
+  let records=(data||[]) as unknown as Record<string,unknown>[];
   if(section==="mensagens"&&records.length){const ids=[...new Set(records.flatMap(r=>[String(r.sender_id||""),String(r.recipient_id||"")]).filter(Boolean))];const {data:profiles}=await db.from("profiles").select("id,full_name").in("id",ids);const names:Record<string,string>={};(profiles||[]).forEach(p=>names[p.id]=p.full_name||p.id.slice(0,8));records=records.map(r=>({...r,sender_id:names[String(r.sender_id)]||"Usuário",recipient_id:names[String(r.recipient_id)]||"Usuário"}));}
   setRows(records);
  }catch(e){setError(e instanceof Error?e.message:"Não foi possível carregar os dados.");}finally{setLoading(false);}}
