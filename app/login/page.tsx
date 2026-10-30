@@ -1,13 +1,16 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Flame, LockKeyhole, Mail } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const blocked = params.get("blocked") === "1";
+  const [blocked, setBlocked] = useState(false);
+  useEffect(() => {
+    setBlocked(new URLSearchParams(window.location.search).get("blocked") === "1");
+  }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
