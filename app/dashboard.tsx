@@ -9,7 +9,7 @@ import {
   BusFront, CalendarDays, ChevronDown, ChevronRight,
   Church, Compass, FileText, Flame, LayoutDashboard,
   MapPinned, Menu, MessageSquare, Music2, Search, Settings, ShieldCheck,
-  Users, X, ArrowUpRight, Clock3, MapPin, CircleCheck, CircleAlert,
+  Users, X, ArrowUpRight, Clock3, MapPin, CircleCheck, CircleAlert, LogOut,
   Plus, MoreHorizontal, Route, ChartNoAxesCombined
 } from "lucide-react";
 
@@ -50,6 +50,7 @@ export default function Home() {
   const rolePages:Record<string,string[]>={admin:navItems.map(x=>x.label),pastor:["Visão geral","Igrejas e regiões","Cultos e programação","Músicas e repertório","Viagens e ônibus","Mapa ao vivo","Evangelismo","Mensagens e avisos","Relatórios","Documentos e logos","Configurações"],leader:["Visão geral","Viagens e ônibus","Mapa ao vivo","Evangelismo","Mensagens e avisos"],driver:["Visão geral","Viagens e ônibus","Mapa ao vivo","Mensagens e avisos"],director:["Visão geral","Cultos e programação","Músicas e repertório","Mensagens e avisos"],preacher:["Visão geral","Cultos e programação","Mensagens e avisos"],musician:["Visão geral","Cultos e programação","Músicas e repertório","Mensagens e avisos"]};
   const [active, setActive] = useState("Visão geral");
   const navigate = (label:string) => { const paths:Record<string,string>={"Visão geral":"/painel","Igrejas e regiões":"/painel/igrejas","Usuários e equipes":"/painel/usuarios","Cultos e programação":"/painel/programacao","Músicas e repertório":"/painel/musicas","Viagens e ônibus":"/painel/viagens","Mapa ao vivo":"/painel/mapa","Evangelismo":"/painel/evangelismo","Mensagens e avisos":"/painel/mensagens","Relatórios":"/painel/relatorios","Documentos e logos":"/painel/documentos","Configurações":"/painel/configuracoes"}; setActive(label); setMobileOpen(false); router.push(paths[label]||"/painel"); };
+  const logout = async () => { const db=createClient(); await db.auth.signOut(); router.replace("/login"); router.refresh(); };
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showWelcome, setShowWelcome] = useState(true);
@@ -101,6 +102,7 @@ export default function Home() {
           <button className="profile-row" onClick={() => navigate("Configurações")}>
             <div className="avatar avatar-admin">{initials}</div><div className="profile-copy"><strong>{profileName}</strong><span>{roleLabels[role]||"Usuário"}</span></div><MoreHorizontal size={18}/>
           </button>
+          <button className="logout-button" onClick={logout}><LogOut size={15}/> Sair da conta</button>
         </div>
       </aside>
 
