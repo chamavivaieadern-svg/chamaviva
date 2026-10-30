@@ -7,7 +7,6 @@ import {Plus,ArrowUp,ArrowDown,Trash2,FileDown,CheckCircle2} from "lucide-react"
 
 type EventRow={id:string;title:string;starts_at:string;venue:string|null;status:string};
 type Item={id:string;title:string;participant_name:string|null;item_type:string;starts_at:string|null;duration_minutes:number|null;sort_order:number;notes:string|null;lyrics:string|null};
-type Asset={label:string;storage_path:string;is_official:boolean};
 async function imageData(url:string):Promise<string>{const response=await fetch(url);const blob=await response.blob();if(blob.type.includes("svg")){const objectUrl=URL.createObjectURL(blob);try{const img=new Image();await new Promise<void>((resolve,reject)=>{img.onload=()=>resolve();img.onerror=()=>reject(new Error("Logo SVG inválida."));img.src=objectUrl;});const canvas=document.createElement("canvas");canvas.width=img.naturalWidth||600;canvas.height=img.naturalHeight||240;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Não foi possível processar a logo.");ctx.drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL("image/png");}finally{URL.revokeObjectURL(objectUrl);}}return await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(blob);});}
 export default function ProgramBuilder(){
  const [events,setEvents]=useState<EventRow[]>([]),[eventId,setEventId]=useState(""),[items,setItems]=useState<Item[]>([]);
@@ -36,17 +35,21 @@ export default function ProgramBuilder(){
  async function publish(){if(!eventId||!["admin","director"].includes(role))return;if(!confirm("Publicar esta programação para os usuários autorizados da igreja?"))return;setBusy(true);setError("");const db=createClient();const {error}=await db.from("events").update({status:"published"}).eq("id",eventId);if(error)setError(error.message);else{setMessage("Programação publicada e notificações enviadas.");await loadEvents();}setBusy(false);}
  async function downloadPdf(){
   if(!["admin","director"].includes(role)){setError("Somente ADM e dirigente podem baixar o PDF.");return;}
-  const event=events.find(x=>x.id===eventId);if(!event)return;setBusy(true);setError("");
+  if(!eventId)return;setBusy(true);setError("");
   try{
-   const db=createClient();const {data:assets}=await db.from("brand_assets").select("label,storage_path,is_official").order("is_official",{ascending:false});
+   const response=await fetch("/api/programacao/"+eventId+"/export");
+   const payload=await response.json();
+   if(!response.ok)throw new Error(payload.error||"Exportação não autorizada.");
+   const event=payload.event as EventRow;
+   const pdfItems=payload.items as Item[];
+   const logos=payload.logos as {label:string;storage_path:string;is_official:boolean;url:string}[];
    const pdf=new jsPDF({unit:"mm",format:"a4"});let y=15;
-   const logos=(assets||[]).filter((a:Asset)=>/\.(png|jpe?g|svg)$/i.test(a.storage_path)).slice(0,4);
-   for(const asset of logos){const signed=await db.storage.from("chama-viva-assets").createSignedUrl(asset.storage_path,90);if(signed.data?.signedUrl){try{const data=await imageData(signed.data.signedUrl);pdf.addImage(data,data.startsWith("data:image/jpeg")?"JPEG":"PNG",14,y,25,18,"","FAST");}catch{/* logo opcional */}}}
+   for(const asset of logos){try{const data=await imageData(asset.url);pdf.addImage(data,data.startsWith("data:image/jpeg")?"JPEG":"PNG",14,y,25,18,"","FAST");}catch{/* logo opcional */}}
    pdf.setTextColor(185,75,22);pdf.setFont("helvetica","bold");pdf.setFontSize(18);pdf.text("CHAMA VIVA",pdf.internal.pageSize.getWidth()-14,22,{align:"right"});
    y=43;pdf.setTextColor(40,30,24);pdf.setFontSize(16);pdf.text(event.title,14,y);y+=8;
    pdf.setFont("helvetica","normal");pdf.setFontSize(10);pdf.text("Data: "+new Date(event.starts_at).toLocaleString("pt-BR"),14,y);y+=6;if(event.venue){pdf.text("Local: "+event.venue,14,y);y+=6;}
    y+=5;pdf.setFont("helvetica","bold");pdf.setFontSize(11);pdf.text("ORDEM DA PROGRAMAÇÃO",14,y);y+=7;
-   for(let i=0;i<items.length;i++){const item=items[i];if(y>265){pdf.addPage();y=18;}
+   for(let i=0;i<pdfItems.length;i++){const item=pdfItems[i];if(y>265){pdf.addPage();y=18;}
     pdf.setFont("helvetica","bold");pdf.setFontSize(10);const time=item.starts_at?new Date(item.starts_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"—";
     pdf.text((i+1)+". "+time+"  "+item.title,14,y);y+=5;
     pdf.setFont("helvetica","normal");pdf.setFontSize(9);const detail=[item.participant_name,item.duration_minutes?item.duration_minutes+" min":null,item.item_type].filter(Boolean).join(" • ");if(detail){pdf.text(detail,19,y);y+=5;}
