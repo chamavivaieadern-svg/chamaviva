@@ -12,6 +12,7 @@ No SQL Editor, execute as migrations em ordem:
 3. `202610300003_driver_group_visibility.sql`
 4. `202610300004_realtime_locations.sql`
 5. `202610300005_privacy_and_role_scoping.sql`
+6. `202610300006_notifications.sql`
 
 Confirme que as tabelas estão com RLS habilitado. Em Authentication > Providers, habilite e-mail. Em Authentication > Multi-Factor Authentication, habilite TOTP. Defina a URL do site e as Redirect URLs para o domínio Netlify de produção e para o domínio de preview que você realmente utilizar.
 
