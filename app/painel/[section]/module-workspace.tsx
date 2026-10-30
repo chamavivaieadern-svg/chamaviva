@@ -43,8 +43,8 @@ export default function ModuleWorkspace({section}:{section:string}){
  {section==="viagens"&&<VehicleManager/>}
  {section==="viagens"&&<TripPassengers/>}
  {section==="relatorios"&&<TravelReports/>}
- {section==="mapa"&&<LocationControls/>}
- {section==="mapa"&&<LocationMap/>}
+ {(section==="mapa"||section==="evangelismo")&&<LocationControls/>}
+ {(section==="mapa"||section==="evangelismo")&&<LocationMap/>}
  {section==="mapa"&&<div className="map-info-card"><MapPin size={19}/><div><b>Localização compartilhada com consentimento</b><p>As posições são registradas somente durante viagens ou evangelismos ativos. A tabela abaixo mostra o horário real da última atualização; não representa rastreamento em tempo real enquanto não houver um dispositivo enviando GPS.</p></div></div>}
  {section==="musicas"&&["admin","director"].includes(role)&&<div className="map-info-card"><CheckCircle2 size={18}/><div><b>Aprovação do dirigente</b><p>Somente letras aprovadas podem entrar na programação oficial.</p></div></div>}
  {error&&<p className="module-error"><AlertCircle size={15}/>{error}</p>}
