@@ -9,7 +9,7 @@ type Active={kind:"trip"|"group";id:string;label:string};
 export default function LocationControls(){
  const [trips,setTrips]=useState<Trip[]>([]),[groups,setGroups]=useState<Group[]>([]);
  const [selectedTrip,setSelectedTrip]=useState(""),[selectedGroup,setSelectedGroup]=useState("");
- const [active,setActive]=useState<Active|null>(null),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);
+ const [active,setActive]=useState<Active|null>(null),[message,setMessage]=useState(""),[busy,setBusy]=useState(false),[finishStatus,setFinishStatus]=useState("completed");
  const watchRef=useRef<number|null>(null),lastSent=useRef(0);
  useEffect(()=>{let alive=true;(async()=>{const db=createClient();const {data:{user}}=await db.auth.getUser();if(!user)return;
   const [t,g]=await Promise.all([db.from("trips").select("id,title,status,destination").eq("driver_id",user.id).in("status",["scheduled","awaiting_departure","in_progress"]),db.from("evangelism_groups").select("id,name,status,trip_id").eq("leader_id",user.id).in("status",["planned","active"])]);
@@ -43,7 +43,7 @@ export default function LocationControls(){
   if(!active)return;setBusy(true);
   try{
    if(watchRef.current!==null)navigator.geolocation.clearWatch(watchRef.current);watchRef.current=null;
-   const db=createClient();const {error}=await db.rpc(active.kind==="trip"?"finish_trip_tracking":"finish_group_sharing",active.kind==="trip"?{target_trip:active.id,final_status:"completed"}:{target_group:active.id});
+   const db=createClient();const {error}=await db.rpc(active.kind==="trip"?"finish_trip_tracking":"finish_group_sharing",active.kind==="trip"?{target_trip:active.id,final_status:finishStatus}:{target_group:active.id});
    if(error)throw error;setMessage("Compartilhamento encerrado.");setActive(null);
    const [t,g]=await Promise.all([db.from("trips").select("id,title,status,destination").eq("driver_id",(await db.auth.getUser()).data.user?.id||"").in("status",["scheduled","awaiting_departure","in_progress"]),db.from("evangelism_groups").select("id,name,status,trip_id").eq("leader_id",(await db.auth.getUser()).data.user?.id||"").in("status",["planned","active"])]);
    setTrips(t.data||[]);setGroups(g.data||[]);
@@ -52,7 +52,7 @@ export default function LocationControls(){
  }
  return <section className="gps-controls">
   <div className="gps-heading"><ShieldCheck size={18}/><div><b>Compartilhamento de localização</b><small>O GPS só é enviado após sua autorização e durante uma atividade ativa.</small></div></div>
-  {active?<div className="gps-active"><span><i/> COMPARTILHAMENTO ATIVO</span><b>{active.label}</b><button onClick={stop} disabled={busy}><Square size={14} fill="currentColor"/> Encerrar e parar GPS</button></div>:<div className="gps-options">
+  {active?<div className="gps-active"><span><i/> COMPARTILHAMENTO ATIVO</span><b>{active.label}</b>{active.kind==="trip"&&<select className="gps-finish-status" value={finishStatus} onChange={e=>setFinishStatus(e.target.value)}><option value="arrived">Cheguei ao destino</option><option value="completed">Viagem concluída</option><option value="issue">Registrar problema</option></select>}<button onClick={stop} disabled={busy}><Square size={14} fill="currentColor"/> Encerrar e parar GPS</button></div>:<div className="gps-options">
    <div className="gps-option"><div><BusFront size={18}/><b>Sou motorista</b></div><select value={selectedTrip} onChange={e=>setSelectedTrip(e.target.value)}><option value="">Selecione sua viagem</option>{trips.map(t=><option key={t.id} value={t.id}>{t.title} • {t.status}</option>)}</select><button disabled={!selectedTrip||busy} onClick={()=>{const t=trips.find(x=>x.id===selectedTrip);if(t)start("trip",t.id,t.title);}}><Radio size={15}/> {trips.find(t=>t.id===selectedTrip)?.status==="in_progress"?"Retomar compartilhamento":"Autorizar e iniciar viagem"}</button></div>
    <div className="gps-option"><div><Users size={18}/><b>Sou líder de grupo</b></div><select value={selectedGroup} onChange={e=>setSelectedGroup(e.target.value)}><option value="">Selecione seu grupo</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name} • {g.status}</option>)}</select><button disabled={!selectedGroup||busy} onClick={()=>{const g=groups.find(x=>x.id===selectedGroup);if(g)start("group",g.id,g.name);}}><Radio size={15}/> {groups.find(g=>g.id===selectedGroup)?.status==="active"?"Retomar compartilhamento":"Autorizar e iniciar evangelismo"}</button></div>
   </div>}
