@@ -29,18 +29,6 @@ const navItems: NavItem[] = [
   { label: "Configurações", icon: Settings, group: "SISTEMA" },
 ];
 
-const events = [
-  { day: "02", month: "NOV", title: "Culto de celebração", church: "Igreja Central • Região Norte", time: "19:00", status: "Confirmado", tone: "green" },
-  { day: "05", month: "NOV", title: "Cruzada Chama Viva", church: "Praça da Bíblia • Região Sul", time: "18:30", status: "Em organização", tone: "orange" },
-  { day: "08", month: "NOV", title: "Evangelismo regional", church: "Ponto de encontro: Igreja Central", time: "08:00", status: "Planejado", tone: "blue" },
-];
-
-const activities = [
-  { icon: Music2, title: "Letra enviada para aprovação", detail: "Equipe de louvor • Igreja Central", time: "Há 8 min", color: "orange" },
-  { icon: BusFront, title: "Viagem programada", detail: "Ônibus 01 • Região Norte", time: "Há 24 min", color: "blue" },
-  { icon: MessageSquare, title: "Nova observação do pastor", detail: "Pastor da Região Sul", time: "Há 42 min", color: "purple" },
-];
-
 export default function Home() {
   const router = useRouter();
   const [role,setRole] = useState("pending");
@@ -54,7 +42,21 @@ export default function Home() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showWelcome, setShowWelcome] = useState(true);
+  const [overviewStats, setOverviewStats] = useState({ churches: "—", people: "—", events: "—", trips: "—" });
+  const [upcomingEvents, setUpcomingEvents] = useState<{id:string;day:string;month:string;title:string;church:string;time:string;status:string;tone:string}[]>([]);
+  const [recentActivities, setRecentActivities] = useState<{id:string;title:string;detail:string;time:string;color:string}[]>([]);
   useEffect(()=>{(async()=>{const db=createClient();const {data:{user}}=await db.auth.getUser();if(!user)return;const {data:p}=await db.from("profiles").select("full_name,role").eq("id",user.id).single();if(p){setRole(p.role);setProfileName(p.full_name||"Usuário");if(p.role==="admin")setChurchName("Todas as regiões");else{const {data:c}=await db.from("churches").select("name").limit(1).maybeSingle();if(c?.name)setChurchName(c.name);}}})();},[]);
+  useEffect(()=>{let alive=true;(async()=>{try{const db=createClient();const now=new Date().toISOString();const [churchCount,peopleCount,eventCount,tripCount,eventsResult,activityResult]=await Promise.all([
+    db.from("churches").select("id",{count:"exact",head:true}),
+    db.from("profiles").select("id",{count:"exact",head:true}),
+    db.from("events").select("id",{count:"exact",head:true}).gte("starts_at",now),
+    db.from("trips").select("id",{count:"exact",head:true}).eq("status","in_progress"),
+    db.from("events").select("id,title,starts_at,venue,status").gte("starts_at",now).order("starts_at",{ascending:true}).limit(3),
+    db.from("notifications").select("id,title,body,created_at").order("created_at",{ascending:false}).limit(4)
+  ]);if(!alive)return;setOverviewStats({churches:String(churchCount.count??0),people:String(peopleCount.count??0),events:String(eventCount.count??0),trips:String(tripCount.count??0)});
+  setUpcomingEvents((eventsResult.data||[]).map(e=>{const d=new Date(e.starts_at);const tones:Record<string,string>={published:"green",draft:"orange",cancelled:"red",completed:"blue"};const statuses:Record<string,string>={published:"Publicada",draft:"Em organização",cancelled:"Cancelada",completed:"Concluída"};return{id:e.id,day:d.toLocaleDateString("pt-BR",{day:"2-digit"}),month:d.toLocaleDateString("pt-BR",{month:"short"}).replace(".","").toUpperCase(),title:e.title,church:e.venue||"Local não informado",time:d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),status:statuses[e.status]||e.status,tone:tones[e.status]||"orange"};}));
+  setRecentActivities((activityResult.data||[]).map(n=>({id:n.id,title:n.title,detail:n.body,time:new Date(n.created_at).toLocaleString("pt-BR"),color:"orange"})));
+  }catch(err){console.error("Falha ao carregar resumo do CHAMA VIVA",err);}})();return()=>{alive=false;};},[]);
   const visibleNavItems=rolePages[role]||["Visão geral"];
   const initials=profileName.split(" ").filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
 
@@ -122,7 +124,7 @@ export default function Home() {
         <div className="page-content">
           {isOverview ? <>
             {showWelcome && <section className="welcome-banner">
-              <div className="welcome-copy"><span className="eyebrow"><Flame size={14}/> PAINEL ADMINISTRATIVO</span><h1>Olá, {profileName.split(" ")[0]}! Bem-vindo ao <em>CHAMA VIVA.</em></h1><p>Uma visão completa das igrejas, programações e equipes em um só lugar.</p></div>
+              <div className="welcome-copy"><span className="eyebrow"><Flame size={14}/> PAINEL CHAMA VIVA</span><h1>Olá, {profileName.split(" ")[0]}! Bem-vindo ao <em>CHAMA VIVA.</em></h1><p>Uma visão completa das igrejas, programações e equipes em um só lugar.</p></div>
               <div className="welcome-art"><div className="art-ring ring-one"/><div className="art-ring ring-two"/><Flame size={82} strokeWidth={1.15}/></div>
               <button className="banner-close" onClick={() => setShowWelcome(false)} aria-label="Fechar boas-vindas"><X size={17}/></button>
             </section>}
@@ -130,21 +132,21 @@ export default function Home() {
             <div className="section-heading"><div><span className="eyebrow muted-eyebrow">ACOMPANHAMENTO GERAL</span><h2>Visão geral</h2><p>Acompanhe o que está acontecendo em todas as regiões.</p></div><button className="button-primary" onClick={() => navigate("Cultos e programação")}><Plus size={17}/> Nova programação</button></div>
 
             <section className="stats-grid">
-              <StatCard icon={Church} label="Igrejas cadastradas" value="—" helper="Cadastre suas regiões" tint="orange"/>
-              <StatCard icon={Users} label="Pessoas e equipes" value="—" helper="Usuários serão carregados" tint="yellow"/>
-              <StatCard icon={CalendarDays} label="Próximos eventos" value="03" helper="Exemplos de demonstração" tint="red"/>
-              <StatCard icon={BusFront} label="Viagens em andamento" value="—" helper="GPS ainda não conectado" tint="blue"/>
+              <StatCard icon={Church} label="Igrejas cadastradas" value={overviewStats.churches} helper="Dados do Supabase" tint="orange"/>
+              <StatCard icon={Users} label="Pessoas e equipes" value={overviewStats.people} helper="Dados visíveis ao seu perfil" tint="yellow"/>
+              <StatCard icon={CalendarDays} label="Próximos eventos" value={overviewStats.events} helper="Eventos futuros cadastrados" tint="red"/>
+              <StatCard icon={BusFront} label="Viagens em andamento" value={overviewStats.trips} helper="Viagens com status em deslocamento" tint="blue"/>
             </section>
 
             <section className="content-grid">
               <div className="panel events-panel">
-                <div className="panel-heading"><div><h3>Próximas programações</h3><p>Agenda geral das regiões</p></div><button className="text-button" onClick={() => setActive("Cultos e programação")}>Ver calendário <ArrowUpRight size={15}/></button></div>
-                <div className="event-list">{events.map((event) => <div className="event-row" key={event.title}><div className="date-tile"><strong>{event.day}</strong><span>{event.month}</span></div><div className="event-info"><strong>{event.title}</strong><span><MapPin size={13}/>{event.church}</span></div><div className="event-meta"><span className="event-time"><Clock3 size={13}/>{event.time}</span><span className={`status-pill status-${event.tone}`}>{event.status}</span></div><ChevronRight className="event-chevron" size={17}/></div>)}</div>
-                <button className="panel-footer-button" onClick={() => setActive("Cultos e programação")}>Abrir programação completa <ArrowUpRight size={15}/></button>
+                <div className="panel-heading"><div><h3>Próximas programações</h3><p>Agenda geral das regiões</p></div><button className="text-button" onClick={() => navigate("Cultos e programação")}>Ver calendário <ArrowUpRight size={15}/></button></div>
+                <div className="event-list">{upcomingEvents.map((event) => <div className="event-row" key={event.id}><div className="date-tile"><strong>{event.day}</strong><span>{event.month}</span></div><div className="event-info"><strong>{event.title}</strong><span><MapPin size={13}/>{event.church}</span></div><div className="event-meta"><span className="event-time"><Clock3 size={13}/>{event.time}</span><span className={`status-pill status-${event.tone}`}>{event.status}</span></div><ChevronRight className="event-chevron" size={17}/></div>)}</div>
+                <button className="panel-footer-button" onClick={() => navigate("Cultos e programação")}>Abrir programação completa <ArrowUpRight size={15}/></button>
               </div>
               <div className="panel activity-panel">
                 <div className="panel-heading"><div><h3>Atividade recente</h3><p>Movimentações do sistema</p></div><button className="icon-button subtle-icon" aria-label="Mais opções"><MoreHorizontal size={19}/></button></div>
-                <div className="activity-list">{activities.map(({icon: Icon,title,detail,time,color}) => <div className="activity-row" key={title}><div className={`activity-icon activity-${color}`}><Icon size={17}/></div><div className="activity-copy"><strong>{title}</strong><span>{detail}</span><small>{time}</small></div></div>)}</div>
+                <div className="activity-list">{recentActivities.map((item) => <div className="activity-row" key={item.id}><div className={`activity-icon activity-${item.color}`}><MessageSquare size={17}/></div><div className="activity-copy"><strong>{item.title}</strong><span>{item.detail}</span><small>{item.time}</small></div></div>)}{recentActivities.length===0&&<p className="data-empty">Nenhuma notificação recente.</p>}</div>
                 <button className="panel-footer-button" onClick={() => navigate("Relatórios")}>Ver histórico de atividades <ArrowUpRight size={15}/></button>
               </div>
             </section>
@@ -165,7 +167,7 @@ export default function Home() {
                 </div>
               </div>
             </section>
-            <div className="demo-disclaimer"><CircleAlert size={16}/><span>Prévia inicial: os números, eventos e atividades exibidos são demonstrativos. Os dados reais aparecerão após conectar o Supabase e configurar os acessos.</span></div>
+            <div className="demo-disclaimer"><CircleAlert size={16}/><span>Os totais e programações são carregados conforme as permissões da sua conta. Se algum módulo estiver vazio, verifique os vínculos da igreja e os dados cadastrados.</span></div>
           </> : <ModulePlaceholder title={active} icon={current.icon} onBack={() => setActive("Visão geral")}/>}
           <footer className="app-footer"><span><Flame size={14} fill="currentColor"/> CHAMA VIVA</span><span>Organização com propósito.</span><span>Versão inicial • 0.1.0</span></footer>
         </div>
