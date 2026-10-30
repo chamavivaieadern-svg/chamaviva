@@ -2,7 +2,7 @@
 import {useEffect,useState} from "react";
 import {createClient} from "@/lib/supabase/client";
 import {jsPDF} from "jspdf";
-import {Plus,ArrowUp,ArrowDown,Trash2,FileDown,CalendarDays,Clock3,CheckCircle2} from "lucide-react";
+import {Plus,ArrowUp,ArrowDown,Trash2,FileDown,CheckCircle2} from "lucide-react";
 
 type EventRow={id:string;title:string;starts_at:string;venue:string|null;status:string};
 type Item={id:string;title:string;participant_name:string|null;item_type:string;starts_at:string|null;duration_minutes:number|null;sort_order:number;notes:string|null};
@@ -38,7 +38,7 @@ export default function ProgramBuilder(){
   try{
    const db=createClient();const {data:assets}=await db.from("brand_assets").select("label,storage_path,is_official").order("is_official",{ascending:false});
    const pdf=new jsPDF({unit:"mm",format:"a4"});let y=15;
-   const logos=(assets||[]).filter((a:Asset)=>/\.(png|jpe?g|webp)$/i.test(a.storage_path)).slice(0,4);
+   const logos=(assets||[]).filter((a:Asset)=>/\.(png|jpe?g)$/i.test(a.storage_path)).slice(0,4);
    for(const asset of logos){const signed=await db.storage.from("chama-viva-assets").createSignedUrl(asset.storage_path,90);if(signed.data?.signedUrl){try{const data=await imageData(signed.data.signedUrl);pdf.addImage(data,data.startsWith("data:image/jpeg")?"JPEG":"PNG",14,y,25,18,"","FAST");}catch{/* logo opcional */}}}
    pdf.setTextColor(185,75,22);pdf.setFont("helvetica","bold");pdf.setFontSize(18);pdf.text("CHAMA VIVA",pdf.internal.pageSize.getWidth()-14,22,{align:"right"});
    y=43;pdf.setTextColor(40,30,24);pdf.setFontSize(16);pdf.text(event.title,14,y);y+=8;
