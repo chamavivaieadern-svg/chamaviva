@@ -8,7 +8,7 @@ import {Plus,ArrowUp,ArrowDown,Trash2,FileDown,CheckCircle2} from "lucide-react"
 type EventRow={id:string;title:string;starts_at:string;venue:string|null;status:string};
 type Item={id:string;title:string;participant_name:string|null;item_type:string;starts_at:string|null;duration_minutes:number|null;sort_order:number;notes:string|null;lyrics:string|null};
 type Asset={label:string;storage_path:string;is_official:boolean};
-async function imageData(url:string):Promise<string>{const response=await fetch(url);const blob=await response.blob();return await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(blob);});}
+async function imageData(url:string):Promise<string>{const response=await fetch(url);const blob=await response.blob();if(blob.type.includes("svg")){const objectUrl=URL.createObjectURL(blob);try{const img=new Image();await new Promise<void>((resolve,reject)=>{img.onload=()=>resolve();img.onerror=()=>reject(new Error("Logo SVG inválida."));img.src=objectUrl;});const canvas=document.createElement("canvas");canvas.width=img.naturalWidth||600;canvas.height=img.naturalHeight||240;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Não foi possível processar a logo.");ctx.drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL("image/png");}finally{URL.revokeObjectURL(objectUrl);}}return await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(blob);});}
 export default function ProgramBuilder(){
  const [events,setEvents]=useState<EventRow[]>([]),[eventId,setEventId]=useState(""),[items,setItems]=useState<Item[]>([]);
  const [role,setRole]=useState("");
@@ -40,7 +40,7 @@ export default function ProgramBuilder(){
   try{
    const db=createClient();const {data:assets}=await db.from("brand_assets").select("label,storage_path,is_official").order("is_official",{ascending:false});
    const pdf=new jsPDF({unit:"mm",format:"a4"});let y=15;
-   const logos=(assets||[]).filter((a:Asset)=>/\.(png|jpe?g)$/i.test(a.storage_path)).slice(0,4);
+   const logos=(assets||[]).filter((a:Asset)=>/\.(png|jpe?g|svg)$/i.test(a.storage_path)).slice(0,4);
    for(const asset of logos){const signed=await db.storage.from("chama-viva-assets").createSignedUrl(asset.storage_path,90);if(signed.data?.signedUrl){try{const data=await imageData(signed.data.signedUrl);pdf.addImage(data,data.startsWith("data:image/jpeg")?"JPEG":"PNG",14,y,25,18,"","FAST");}catch{/* logo opcional */}}}
    pdf.setTextColor(185,75,22);pdf.setFont("helvetica","bold");pdf.setFontSize(18);pdf.text("CHAMA VIVA",pdf.internal.pageSize.getWidth()-14,22,{align:"right"});
    y=43;pdf.setTextColor(40,30,24);pdf.setFontSize(16);pdf.text(event.title,14,y);y+=8;
