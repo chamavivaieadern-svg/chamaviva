@@ -21,9 +21,14 @@ export default function LocationControls(){
   if(!confirm("Autorizo o CHAMA VIVA a compartilhar minha localização somente durante esta atividade?"))return;
   setBusy(true);setMessage("");
   try{
+   const initial=await new Promise<GeolocationPosition>((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,maximumAge:5000,timeout:20000}));
    const db=createClient();const rpc=await db.rpc(kind==="trip"?"start_trip_tracking":"start_group_sharing",kind==="trip"?{target_trip:id}:{target_group:id});
    if(rpc.error)throw rpc.error;
-   setActive({kind,id,label});lastSent.current=0;
+   setActive({kind,id,label});lastSent.current=Date.now();
+   const {data:{user}}=await db.auth.getUser();if(user){
+    const row={user_id:user.id,latitude:initial.coords.latitude,longitude:initial.coords.longitude,accuracy_m:initial.coords.accuracy,...(kind==="trip"?{trip_id:id}:{group_id:id})};
+    const {error}=await db.from("live_locations").insert(row);if(error)setMessage("Atividade iniciada, mas não foi possível enviar a primeira posição: "+error.message);
+   }
    watchRef.current=navigator.geolocation.watchPosition(async(position)=>{
     const now=Date.now();if(now-lastSent.current<10000)return;lastSent.current=now;
     const {data:{user}}=await db.auth.getUser();if(!user)return;
