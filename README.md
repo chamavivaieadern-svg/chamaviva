@@ -1,26 +1,33 @@
 # CHAMA VIVA
 
-Plataforma de gestão de igrejas, cultos, viagens e equipes de evangelismo.
+Sistema de gestão de igrejas, cultos, viagens, comunicação e equipes de evangelismo.
 
-## Stack aprovada
-- Next.js (App Router), React e TypeScript
+## Tecnologia
+- Next.js App Router, React 19 e TypeScript
 - CSS e Motion
-- Supabase (Auth, Postgres, Storage e Realtime)
-- Vercel para hospedagem
+- Supabase Auth, PostgreSQL, Storage e Realtime
+- Netlify com plugin oficial para Next.js
 
-## Desenvolvimento local
-1. Instale Node.js LTS.
-2. Execute `npm install`.
-3. Copie `.env.example` para `.env.local`.
-4. Preencha as credenciais do projeto Supabase quando ele for provisionado.
-5. Execute `npm run dev`.
+## Rodar localmente
+1. Node.js 20+
+2. `npm install`
+3. Copie `.env.example` para `.env.local` e configure as chaves do Supabase.
+4. Aplique as migrations em `supabase/migrations` no SQL Editor do Supabase.
+5. `npm run dev`
 
-## Estado atual
-O primeiro commit inicia a estrutura visual do painel administrativo. A interface inicial usa dados demonstrativos; autenticação, banco de dados, permissões RLS, notificações, e-mails, PDFs e GPS ainda precisam ser conectados e testados antes de uso real.
+## Netlify
+- Build command: `npm run build`
+- Plugin: `@netlify/plugin-nextjs`
+- Configure no painel do Netlify: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` e, somente para rotas administrativas server-side, `SUPABASE_SERVICE_ROLE_KEY`.
+- Não coloque a service role key em variáveis NEXT_PUBLIC nem no código do navegador.
 
-## Segurança planejada
-- Convite seguro para o primeiro ADM.
-- Contas individuais e 2FA obrigatória.
-- Autorização no servidor e políticas RLS por igreja e função.
-- Rastreamento GPS somente durante viagens/evangelismos ativos e autorizados.
-- Histórico de auditoria e proteção de uploads.
+## Segurança e implantação
+- Usuários novos começam sem privilégios (role pending). O primeiro ADM deve ser provisionado manualmente e com identidade verificada.
+- Convites administrativos exigem sessão ADM ativa e MFA AAL2.
+- MFA TOTP está preparado; configure o provedor no Supabase Authentication > Multi-Factor Authentication.
+- Mantenha RLS habilitado e revise as políticas antes de produção.
+- GPS somente durante viagem/evangelismo ativo e após consentimento explícito.
+- Não publique com dados demonstrativos como se fossem dados reais.
+
+## Estado
+O repositório contém a interface inicial, rotas de login/MFA, clientes Supabase e primeira migration de dados. Mapas/GPS, PDFs, e-mail transacional e telas CRUD ainda exigem implementação e validação com as credenciais do projeto.
