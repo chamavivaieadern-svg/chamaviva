@@ -25,7 +25,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  async function load(){setLoading(true);setError("");try{const db=createClient();const {data:{user}}=await db.auth.getUser();if(user){const {data:p}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();setRole(p?.role||"");}
   let query=db.from(config.table).select(config.columns.join(",")).order(section==="mapa"?"recorded_at":"created_at",{ascending:false}).limit(100);
   if(section==="mensagens"&&user)query=query.or("sender_id.eq."+user.id+",recipient_id.eq."+user.id);
-  const {data,error}=await query;if(error)throw error;setRows((data||[]) as Record<string,unknown>[]);
+  const {data,error}=await query;if(error)throw error;setRows((data||[]) as unknown as Record<string,unknown>[]);
  }catch(e){setError(e instanceof Error?e.message:"Não foi possível carregar os dados.");}finally{setLoading(false);}}
  useEffect(()=>{load();},[section]);
  const Icon=config.icon==="church"?Church:config.icon==="calendar"?CalendarDays:config.icon==="music"?Music2:config.icon==="bus"?BusFront:config.icon==="users"?Users:config.icon==="message"?MessageSquare:config.icon==="file"?FileText:MapPin;

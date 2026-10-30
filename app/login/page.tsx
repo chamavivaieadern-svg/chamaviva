@@ -1,17 +1,19 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Flame, LockKeyhole, Mail } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const blocked = params.get("blocked") === "1";
+  const [blocked, setBlocked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => { setBlocked(new URLSearchParams(window.location.search).get("blocked") === "1"); }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(""); setBusy(true);
@@ -23,7 +25,7 @@ export default function LoginPage() {
       const hasTotp = factors?.totp?.some(f => f.status === "verified");
       if (!hasTotp) { router.push("/seguranca/2fa"); return; }
       const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (assurance.currentLevel !== "aal2") { router.push("/seguranca/2fa"); return; }
+      if (assurance?.currentLevel !== "aal2") { router.push("/seguranca/2fa"); return; }
       router.push(new URLSearchParams(window.location.search).get("next") || "/painel"); router.refresh();
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível entrar."); }
     finally { setBusy(false); }

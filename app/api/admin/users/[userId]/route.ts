@@ -8,7 +8,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{userId:str
     const {data:{user}}=await supabase.auth.getUser();
     if(!user)return NextResponse.json({error:"Não autenticado."},{status:401});
     const {data:assurance}=await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if(assurance.currentLevel!=="aal2")return NextResponse.json({error:"Confirme o segundo fator."},{status:403});
+    if(assurance?.currentLevel!=="aal2")return NextResponse.json({error:"Confirme o segundo fator."},{status:403});
     const {data:profile}=await supabase.from("profiles").select("role,status").eq("id",user.id).single();
     if(profile?.role!=="admin"||profile.status!=="active")return NextResponse.json({error:"Somente o ADM pode administrar usuários."},{status:403});
     const {userId}=await params;
@@ -29,7 +29,7 @@ export async function DELETE(_request:Request,{params}:{params:Promise<{userId:s
     const {data:{user}}=await supabase.auth.getUser();
     if(!user)return NextResponse.json({error:"Não autenticado."},{status:401});
     const {data:assurance}=await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if(assurance.currentLevel!=="aal2")return NextResponse.json({error:"Confirme o segundo fator."},{status:403});
+    if(assurance?.currentLevel!=="aal2")return NextResponse.json({error:"Confirme o segundo fator."},{status:403});
     const {data:profile}=await supabase.from("profiles").select("role,status").eq("id",user.id).single();
     if(profile?.role!=="admin"||profile.status!=="active")return NextResponse.json({error:"Somente o ADM pode remover usuários."},{status:403});
     const {userId}=await params;
