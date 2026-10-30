@@ -46,17 +46,31 @@ export default function Home() {
   const [upcomingEvents, setUpcomingEvents] = useState<{id:string;day:string;month:string;title:string;church:string;time:string;status:string;tone:string}[]>([]);
   const [recentActivities, setRecentActivities] = useState<{id:string;title:string;detail:string;time:string;color:string}[]>([]);
   useEffect(()=>{(async()=>{const db=createClient();const {data:{user}}=await db.auth.getUser();if(!user)return;const {data:p}=await db.from("profiles").select("full_name,role").eq("id",user.id).single();if(p){setRole(p.role);setProfileName(p.full_name||"Usuário");if(p.role==="admin")setChurchName("Todas as regiões");else{const {data:c}=await db.from("churches").select("name").limit(1).maybeSingle();if(c?.name)setChurchName(c.name);}}})();},[]);
-  useEffect(()=>{let alive=true;(async()=>{try{const db=createClient();const now=new Date().toISOString();const [churchCount,peopleCount,eventCount,tripCount,eventsResult,activityResult]=await Promise.all([
-    db.from("churches").select("id",{count:"exact",head:true}),
-    db.from("profiles").select("id",{count:"exact",head:true}),
-    db.from("events").select("id",{count:"exact",head:true}).gte("starts_at",now),
-    db.from("trips").select("id",{count:"exact",head:true}).eq("status","in_progress"),
-    db.from("events").select("id,title,starts_at,venue,status").gte("starts_at",now).order("starts_at",{ascending:true}).limit(3),
-    db.from("notifications").select("id,title,body,created_at").order("created_at",{ascending:false}).limit(4)
-  ]);if(!alive)return;setOverviewStats({churches:String(churchCount.count??0),people:String(peopleCount.count??0),events:String(eventCount.count??0),trips:String(tripCount.count??0)});
-  setUpcomingEvents((eventsResult.data||[]).map(e=>{const d=new Date(e.starts_at);const tones:Record<string,string>={published:"green",draft:"orange",cancelled:"red",completed:"blue"};const statuses:Record<string,string>={published:"Publicada",draft:"Em organização",cancelled:"Cancelada",completed:"Concluída"};return{id:e.id,day:d.toLocaleDateString("pt-BR",{day:"2-digit"}),month:d.toLocaleDateString("pt-BR",{month:"short"}).replace(".","").toUpperCase(),title:e.title,church:e.venue||"Local não informado",time:d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),status:statuses[e.status]||e.status,tone:tones[e.status]||"orange"};}));
-  setRecentActivities((activityResult.data||[]).map(n=>({id:n.id,title:n.title,detail:n.body,time:new Date(n.created_at).toLocaleString("pt-BR"),color:"orange"})));
-  }catch(err){console.error("Falha ao carregar resumo do CHAMA VIVA",err);}})();return()=>{alive=false;};},[]);
+  useEffect(()=>{let alive=true;const db=createClient();
+    async function refresh(){try{const now=new Date().toISOString();const [churchCount,peopleCount,eventCount,tripCount,eventsResult,activityResult]=await Promise.all([
+      db.from("churches").select("id",{count:"exact",head:true}),
+      db.from("profiles").select("id",{count:"exact",head:true}),
+      db.from("events").select("id",{count:"exact",head:true}).gte("starts_at",now).neq("status","cancelled"),
+      db.from("trips").select("id",{count:"exact",head:true}).eq("status","in_progress"),
+      db.from("events").select("id,title,starts_at,venue,status").gte("starts_at",now).neq("status","cancelled").order("starts_at",{ascending:true}).limit(3),
+      db.from("notifications").select("id,title,body,created_at").order("created_at",{ascending:false}).limit(4)
+    ]);
+      if(!alive)return;
+      setOverviewStats({churches:String(churchCount.count??0),people:String(peopleCount.count??0),events:String(eventCount.count??0),trips:String(tripCount.count??0)});
+      setUpcomingEvents((eventsResult.data||[]).map(e=>{const d=new Date(e.starts_at);const tones:Record<string,string>={published:"green",draft:"orange",cancelled:"red",completed:"blue"};const statuses:Record<string,string>={published:"Publicada",draft:"Em organização",cancelled:"Cancelada",completed:"Concluída"};return{id:e.id,day:d.toLocaleDateString("pt-BR",{day:"2-digit"}),month:d.toLocaleDateString("pt-BR",{month:"short"}).replace(".","").toUpperCase(),title:e.title,church:e.venue||"Local não informado",time:d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),status:statuses[e.status]||e.status,tone:tones[e.status]||"orange"};}));
+      setRecentActivities((activityResult.data||[]).map(n=>({id:n.id,title:n.title,detail:n.body,time:new Date(n.created_at).toLocaleString("pt-BR"),color:"orange"})));
+    }catch(err){console.error("Falha ao carregar resumo do CHAMA VIVA",err);}
+    }
+    refresh();
+    const channel=db.channel("dashboard-overview-live")
+      .on("postgres_changes",{event:"*",schema:"public",table:"churches"},refresh)
+      .on("postgres_changes",{event:"*",schema:"public",table:"profiles"},refresh)
+      .on("postgres_changes",{event:"*",schema:"public",table:"events"},refresh)
+      .on("postgres_changes",{event:"*",schema:"public",table:"trips"},refresh)
+      .on("postgres_changes",{event:"*",schema:"public",table:"notifications"},refresh)
+      .subscribe();
+    return()=>{alive=false;db.removeChannel(channel);};
+  },[]);
   const visibleNavItems=rolePages[role]||["Visão geral"];
   const initials=profileName.split(" ").filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
 
