@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import NotificationBell from "./components/notification-bell";
 import { createClient } from "@/lib/supabase/client";
