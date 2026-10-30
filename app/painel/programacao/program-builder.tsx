@@ -10,7 +10,7 @@ type Asset={label:string;storage_path:string;is_official:boolean};
 async function imageData(url:string):Promise<string>{const response=await fetch(url);const blob=await response.blob();return await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(blob);});}
 export default function ProgramBuilder(){
  const [events,setEvents]=useState<EventRow[]>([]),[eventId,setEventId]=useState(""),[items,setItems]=useState<Item[]>([]);
- const [role,setRole]=useState(""),[churchId,setChurchId]=useState("");
+ const [role,setRole]=useState("");
  const [form,setForm]=useState({title:"",participant_name:"",item_type:"other",time:"",duration_minutes:"",notes:""});
  const [busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState("");
  async function loadEvents(){const db=createClient();const {data:{user}}=await db.auth.getUser();if(!user)return;
@@ -39,7 +39,7 @@ export default function ProgramBuilder(){
    const db=createClient();const {data:assets}=await db.from("brand_assets").select("label,storage_path,is_official").order("is_official",{ascending:false});
    const pdf=new jsPDF({unit:"mm",format:"a4"});let y=15;
    const logos=(assets||[]).filter((a:Asset)=>/\.(png|jpe?g|webp)$/i.test(a.storage_path)).slice(0,4);
-   for(const asset of logos){const signed=await db.storage.from("chama-viva-assets").createSignedUrl(asset.storage_path,90);if(signed.data?.signedUrl){try{const data=await imageData(signed.data.signedUrl);pdf.addImage(data,"PNG",14,y,25,18,"","FAST");}catch{/* logo opcional */}}}
+   for(const asset of logos){const signed=await db.storage.from("chama-viva-assets").createSignedUrl(asset.storage_path,90);if(signed.data?.signedUrl){try{const data=await imageData(signed.data.signedUrl);pdf.addImage(data,data.startsWith("data:image/jpeg")?"JPEG":"PNG",14,y,25,18,"","FAST");}catch{/* logo opcional */}}}
    pdf.setTextColor(185,75,22);pdf.setFont("helvetica","bold");pdf.setFontSize(18);pdf.text("CHAMA VIVA",pdf.internal.pageSize.getWidth()-14,22,{align:"right"});
    y=43;pdf.setTextColor(40,30,24);pdf.setFontSize(16);pdf.text(event.title,14,y);y+=8;
    pdf.setFont("helvetica","normal");pdf.setFontSize(10);pdf.text("Data: "+new Date(event.starts_at).toLocaleString("pt-BR"),14,y);y+=6;if(event.venue){pdf.text("Local: "+event.venue,14,y);y+=6;}
