@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import "./dashboard.css";
 import {
   Bell, BusFront, CalendarDays, ChevronDown, ChevronRight,
@@ -39,7 +40,9 @@ const activities = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [active, setActive] = useState("Visão geral");
+  const navigate = (label:string) => { const paths:Record<string,string>={"Visão geral":"/painel","Igrejas e regiões":"/painel/igrejas","Usuários e equipes":"/painel/usuarios","Cultos e programação":"/painel/programacao","Músicas e repertório":"/painel/musicas","Viagens e ônibus":"/painel/viagens","Mapa ao vivo":"/painel/mapa","Evangelismo":"/painel/evangelismo","Mensagens e avisos":"/painel/mensagens","Relatórios":"/painel/relatorios","Documentos e logos":"/painel/documentos","Configurações":"/painel/configuracoes"}; setActive(label); setMobileOpen(false); router.push(paths[label]||"/painel"); };
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [search, setSearch] = useState("");
