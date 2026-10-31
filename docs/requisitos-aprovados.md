@@ -86,5 +86,5 @@ Este documento registra as decisões confirmadas durante o planejamento. Ele ori
 
 ## Estado da implementação
 - Iniciado: estrutura Next.js/TypeScript, layout base, identidade visual inicial e painel administrativo demonstrativo.
-- Ainda não conectado: Supabase, autenticação/2FA, RLS, dados reais, e-mail, notificações persistentes, PDF, uploads, mapas/GPS e módulos operacionais.
-- Antes de produção: configurar credenciais, criar e revisar migrações, implementar testes de permissões e validar em dispositivos móveis.
+- Implementado em parte: autenticação Supabase, fluxo de MFA TOTP, rotas administrativas, módulos de igrejas, programação, usuários, viagens, passageiros, grupos, mapa/GPS, mensagens, notificações, PDF e migrations com RLS.
+- Ainda depende de configuração e validação real: variáveis e migrações no projeto Supabase, primeiro ADM, secrets/webhook de e-mail, domínio/redirects, teste de cada perfil e revisão de segurança antes da produção. GPS em segundo plano continua limitado pelos navegadores móveis.
