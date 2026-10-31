@@ -45,7 +45,7 @@ export default function LocationControls(){
    if(watchRef.current!==null)navigator.geolocation.clearWatch(watchRef.current);watchRef.current=null;
    const db=createClient();const {error}=await db.rpc(active.kind==="trip"?"finish_trip_tracking":"finish_group_sharing",active.kind==="trip"?{target_trip:active.id,final_status:finishStatus}:{target_group:active.id});
    if(error)throw error;setMessage("Compartilhamento encerrado.");setActive(null);
-   const [t,g]=await Promise.all([db.from("trips").select("id,title,status,destination").eq("driver_id",(await db.auth.getUser()).data.user?.id||"").in("status",["scheduled","awaiting_departure","in_progress"]),db.from("evangelism_groups").select("id,name,status,trip_id").eq("leader_id",(await db.auth.getUser()).data.user?.id||"").in("status",["planned","active"])]);
+   const [t,g]=await Promise.all([db.from("trips").select("id,title,status,destination,departure_at").eq("driver_id",(await db.auth.getUser()).data.user?.id||"").in("status",["scheduled","awaiting_departure","in_progress"]),db.from("evangelism_groups").select("id,name,status,trip_id").eq("leader_id",(await db.auth.getUser()).data.user?.id||"").in("status",["planned","active"])]);
    setTrips(t.data||[]);setGroups(g.data||[]);
   }catch(e){setMessage(e instanceof Error?e.message:"Não foi possível encerrar o compartilhamento.");}
   finally{setBusy(false);}
