@@ -6,7 +6,7 @@ Sistema de gestão de igrejas, cultos, viagens, comunicação e equipes de evang
 - Next.js App Router, React 19 e TypeScript
 - CSS e Motion
 - Supabase Auth, PostgreSQL, Storage e Realtime
-- Netlify com plugin oficial para Next.js
+- Vercel com suporte nativo ao Next.js
 
 ## Rodar localmente
 1. Node.js 20+
@@ -15,10 +15,10 @@ Sistema de gestão de igrejas, cultos, viagens, comunicação e equipes de evang
 4. Aplique as migrations em `supabase/migrations` no SQL Editor do Supabase.
 5. `npm run dev`
 
-## Netlify
+## Vercel
 - Build command: `npm run build`
-- Plugin: `@netlify/plugin-nextjs`
-- Configure no painel do Netlify: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` e, somente para rotas administrativas server-side, `SUPABASE_SERVICE_ROLE_KEY`.
+- Framework: Next.js (detectado automaticamente pela Vercel)
+- Configure em Project Settings > Environment Variables na Vercel: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` e, somente para rotas administrativas server-side, `SUPABASE_SERVICE_ROLE_KEY`.
 - Não coloque a service role key em variáveis NEXT_PUBLIC nem no código do navegador.
 
 ## Segurança e implantação
