@@ -21,15 +21,19 @@ export async function POST(request: Request) {
     const fullName = body.full_name?.trim();
     if (!email || !fullName || !body.role || !allowedRoles.includes(body.role) || !body.church_id) return NextResponse.json({ error: "Informe nome, e-mail e uma função válida." }, { status: 400 });
 
-    const admin = createAdminClient();
-    const { data: church, error: churchError } = await admin
+    // Valida a igreja com a sessão autenticada do ADM e as políticas RLS.
+    // A chave privilegiada fica reservada às operações administrativas de Auth e gravação.
+    const { data: church, error: churchError } = await supabase
       .from("churches")
       .select("id")
       .eq("id", body.church_id)
       .maybeSingle();
-    if (churchError) throw churchError;
-    if (!church) return NextResponse.json({ error: "A igreja selecionada não foi encontrada. Atualize a lista e tente novamente." }, { status: 404 });
+    if (churchError) {
+      return NextResponse.json({ error: "Não foi possível validar a igreja com sua sessão. Atualize a página e entre novamente." }, { status: 403 });
+    }
+    if (!church) return NextResponse.json({ error: "A igreja selecionada não está acessível para sua sessão. Atualize a lista e tente novamente." }, { status: 404 });
 
+    const admin = createAdminClient();
     const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: fullName }, redirectTo: new URL("/auth/callback", request.url).toString() });
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
@@ -43,11 +47,10 @@ export async function POST(request: Request) {
         { onConflict: "church_id,user_id" }
       );
     if (membershipError) {
-      // A conta fica sem acesso até o ADM corrigir o vínculo obrigatório.
       await admin.from("profiles").update({ status: "invited" }).eq("id", data.user.id);
       return NextResponse.json({ error: "O convite foi criado, mas o vínculo com a igreja falhou. A conta permanecerá sem acesso até a correção pelo ADM." }, { status: 500 });
     }
-    await admin.from("audit_logs").insert({ actor_id: user.id, action: "user.invited", target_table: "profiles", target_id: data.user.id, details: { email, role: body.role, church_id: body.church_id ?? null } });
+    await admin.from("audit_logs").insert({ actor_id: user.id, action: "user.invited", target_table: "profiles", target_id: data.user.id, details: { email, role: body.role, church_id: body.church_id } });
     return NextResponse.json({ ok: true, invited: email });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Erro interno." }, { status: 500 });
