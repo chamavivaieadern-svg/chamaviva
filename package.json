@@ -27,7 +27,6 @@
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.5.0",
     "typescript": "^5.7.0",
-    "@netlify/plugin-nextjs": "^5.15.0",
     "@types/leaflet": "^1.9.20",
     "@eslint/eslintrc": "^3.3.1"
   }
