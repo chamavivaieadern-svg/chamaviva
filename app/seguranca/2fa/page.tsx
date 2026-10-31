@@ -23,7 +23,7 @@ export default function TwoFactorPage() {
       if(error)throw error;
       const verified=listed?.totp?.find(f=>f.status==="verified");
       if(verified){if(alive){setFactorId(verified.id);setMode("challenge");}return;}
-      const pending=listed?.totp?.find(f=>f.status==="unverified");
+      const pending=listed?.totp?.find(f=>(f.status as string)==="unverified");
       if(pending)await supabase.auth.mfa.unenroll({factorId:pending.id});
       const {data,error:enrollError}=await supabase.auth.mfa.enroll({factorType:"totp",friendlyName:"CHAMA VIVA - Aplicativo autenticador"});
       if(enrollError)throw enrollError;
