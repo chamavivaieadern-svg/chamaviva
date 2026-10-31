@@ -27,13 +27,13 @@ export default function LocationControls(){
    setActive({kind,id,label});lastSent.current=Date.now();
    const {data:{user}}=await db.auth.getUser();if(user){
     const row={user_id:user.id,latitude:initial.coords.latitude,longitude:initial.coords.longitude,accuracy_m:initial.coords.accuracy,...(kind==="trip"?{trip_id:id}:{group_id:id})};
-    const {error}=await db.from("live_locations").insert(row);if(error)setMessage("Atividade iniciada, mas não foi possível enviar a primeira posição: "+error.message);
+    const {error}=await db.from("live_locations").insert(row as never);if(error)setMessage("Atividade iniciada, mas não foi possível enviar a primeira posição: "+error.message);
    }
    watchRef.current=navigator.geolocation.watchPosition(async(position)=>{
     const now=Date.now();if(now-lastSent.current<10000)return;lastSent.current=now;
     const {data:{user}}=await db.auth.getUser();if(!user)return;
     const row={user_id:user.id,latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy_m:position.coords.accuracy,...(kind==="trip"?{trip_id:id}:{group_id:id})};
-    const {error}=await db.from("live_locations").insert(row);if(error)setMessage("Não foi possível enviar a posição: "+error.message);else setMessage("Localização compartilhada. Último envio: "+new Date().toLocaleTimeString("pt-BR"));
+    const {error}=await db.from("live_locations").insert(row as never);if(error)setMessage("Não foi possível enviar a posição: "+error.message);else setMessage("Localização compartilhada. Último envio: "+new Date().toLocaleTimeString("pt-BR"));
    },(error)=>setMessage("GPS indisponível: "+error.message),{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
    setMessage("Compartilhamento iniciado. Mantenha esta tela aberta para enviar posições.");
   }catch(e){setMessage(e instanceof Error?e.message:"Não foi possível iniciar o GPS.");}
