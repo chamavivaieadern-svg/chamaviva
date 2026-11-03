@@ -159,7 +159,7 @@ export default function Home() {
                 <button className="panel-footer-button" onClick={() => navigate("Cultos e programação")}>Abrir programação completa <ArrowUpRight size={15}/></button>
               </div>
               <div className="panel activity-panel">
-                <div className="panel-heading"><div><h3>Atividade recente</h3><p>Movimentações do sistema</p></div><button className="icon-button subtle-icon" aria-label="Mais opções"><MoreHorizontal size={19}/></button></div>
+                <div className="panel-heading"><div><h3>Atividade recente</h3><p>Movimentações do sistema</p></div><button className="icon-button subtle-icon" onClick={() => navigate("Relatórios")} aria-label="Abrir relatórios de atividade" title="Abrir relatórios de atividade"><ArrowUpRight size={19}/></button></div>
                 <div className="activity-list">{recentActivities.map((item) => <div className="activity-row" key={item.id}><div className={`activity-icon activity-${item.color}`}><MessageSquare size={17}/></div><div className="activity-copy"><strong>{item.title}</strong><span>{item.detail}</span><small>{item.time}</small></div></div>)}{recentActivities.length===0&&<p className="data-empty">Nenhuma notificação recente.</p>}</div>
                 <button className="panel-footer-button" onClick={() => navigate("Relatórios")}>Ver histórico de atividades <ArrowUpRight size={15}/></button>
               </div>
@@ -176,7 +176,7 @@ export default function Home() {
                 <div className="quick-actions">
                   <QuickAction icon={Church} label="Cadastrar igreja" onClick={() => navigate("Igrejas e regiões")}/>
                   <QuickAction icon={Users} label="Convidar usuário" onClick={() => navigate("Usuários e equipes")}/>
-                  <QuickAction icon={CalendarDays} label="Criar programação" onClick={() => setActive("Cultos e programação")}/>
+                  <QuickAction icon={CalendarDays} label="Criar programação" onClick={() => navigate("Cultos e programação")}/>
                   <QuickAction icon={Route} label="Organizar viagem" onClick={() => navigate("Viagens e ônibus")}/>
                 </div>
               </div>
