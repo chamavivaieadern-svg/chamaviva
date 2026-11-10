@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 function normalizeMatricula(value: string) {
-  return value.trim().toUpperCase().replace(/\\s+/g, "");
+  return value.trim().toUpperCase().replace(/\s+/g, "");
 }
 
 export async function POST(request: Request) {
