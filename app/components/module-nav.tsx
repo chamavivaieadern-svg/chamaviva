@@ -15,7 +15,7 @@ const items=[
  {label:"Evangelismo",href:"/painel/evangelismo",roles:["admin","pastor","leader"],icon:Compass},
  {label:"Mensagens",href:"/painel/mensagens",roles:["admin","pastor","leader","driver","director","preacher","musician"],icon:MessageSquare},
  {label:"Relatórios",href:"/painel/relatorios",roles:["admin","pastor"],icon:ChartNoAxesCombined},
- {label:"Documentos",href:"/painel/documentos",roles:["admin","pastor"],icon:FileText},
+ {label:"Documentos",href:"/painel/documentos",roles:["admin"],icon:FileText},
  {label:"Configurações",href:"/painel/configuracoes",roles:["admin","pastor","leader","driver","director","preacher","musician"],icon:Settings}
 ];
 export default function ModuleNav(){
