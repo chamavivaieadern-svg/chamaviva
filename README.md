@@ -23,11 +23,11 @@ Sistema de gestão de igrejas, cultos, viagens, comunicação e equipes de evang
 
 ## Segurança e implantação
 - Usuários novos começam sem privilégios (role pending). O primeiro ADM deve ser provisionado manualmente e com identidade verificada.
-- Convites administrativos exigem sessão ADM ativa e MFA AAL2.
+- Convites administrativos exigem sessão ADM ativa; MFA/TOTP não é obrigatório.
 - O acesso usa e-mail e senha individuais. O ADM cria, convida, bloqueia e remove contas; MFA/TOTP não é obrigatório.
 - Mantenha RLS habilitado: as políticas exigem sessão autenticada e respeitam função, status e vínculo com a igreja.
 - GPS somente durante viagem/evangelismo ativo e após consentimento explícito.
 - Não publique com dados demonstrativos como se fossem dados reais.
 
 ## Estado
-O repositório contém o painel inicial protegido, login e MFA TOTP, convites e gestão administrativa de usuários, páginas de módulos com leitura/criação inicial de registros, migrations com RLS, formulários de igrejas/eventos/músicas/viagens/grupos/mensagens/documentos, mapa OpenStreetMap com rota estimada, envio de GPS mediante consentimento, lista de passageiros e estados de embarque, relatórios operacionais iniciais, notificações internas e Edge Function de e-mails importantes. A programação permite organizar participações e exportar PDF para ADM/dirigente com logos carregadas. E-mail depende de publicar a Edge Function, configurar Resend e criar o Database Webhook; módulos e regras ainda precisam ser validados em ambiente real. O GPS pelo navegador exige a tela aberta; rastreamento confiável em segundo plano requer app móvel próprio.
+O repositório contém o painel inicial protegido, login por e-mail e senha, convites e gestão administrativa de usuários, páginas de módulos com leitura/criação inicial de registros, migrations com RLS, formulários de igrejas/eventos/músicas/viagens/grupos/mensagens/documentos, mapa OpenStreetMap com rota estimada, envio de GPS mediante consentimento, lista de passageiros e estados de embarque, relatórios operacionais iniciais, notificações internas e Edge Function de e-mails importantes. A programação permite organizar participações e exportar PDF para ADM/dirigente com logos carregadas. E-mail depende de publicar a Edge Function, configurar Resend e criar o Database Webhook; módulos e regras ainda precisam ser validados em ambiente real. O GPS pelo navegador exige a tela aberta; rastreamento confiável em segundo plano requer app móvel próprio.
