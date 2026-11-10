@@ -9,9 +9,7 @@ async function requireAdmin() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: "Não autenticado." }, { status: 401 }) };
   const { data: profile } = await supabase.from("profiles").select("role,status").eq("id", user.id).single();
-  if (profile?.role !== "admin" || profile.status !== "active") {
-    return { error: NextResponse.json({ error: "Somente o ADM pode administrar usuários." }, { status: 403 }) };
-  }
+  if (profile?.role !== "admin" || profile.status !== "active") return { error: NextResponse.json({ error: "Somente o ADM pode administrar usuários." }, { status: 403 }) };
   return { user, supabase };
 }
 
@@ -22,7 +20,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
     const { user, supabase } = auth;
     const { userId } = await params;
     if (userId === user.id) return NextResponse.json({ error: "Use as configurações da sua própria conta para alterar seus dados." }, { status: 400 });
-
     const body = await request.json() as { status?: string; full_name?: string; email?: string; role?: string; church_id?: string; new_password?: string };
     const admin = createAdminClient();
 
@@ -36,34 +33,28 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
 
     const fullName = body.full_name?.trim();
     const email = body.email?.trim().toLowerCase();
-    if (!fullName || !email || !body.role || !roles.includes(body.role) || !body.church_id) {
-      return NextResponse.json({ error: "Informe nome, e-mail, função e igreja." }, { status: 400 });
-    }
-    if (body.new_password && body.new_password.length < 8) {
-      return NextResponse.json({ error: "A nova senha precisa ter pelo menos 8 caracteres." }, { status: 400 });
-    }
+    if (!fullName || !body.role || !roles.includes(body.role) || !body.church_id) return NextResponse.json({ error: "Informe nome, função e igreja." }, { status: 400 });
+    if (body.email !== undefined && (!email || !email.includes("@"))) return NextResponse.json({ error: "Informe um e-mail válido ou deixe o campo vazio para manter o atual." }, { status: 400 });
+    if (body.new_password && body.new_password.length < 8) return NextResponse.json({ error: "A nova senha precisa ter pelo menos 8 caracteres." }, { status: 400 });
     const { data: church, error: churchError } = await supabase.from("churches").select("id").eq("id", body.church_id).maybeSingle();
     if (churchError || !church) return NextResponse.json({ error: "Igreja não encontrada ou sem acesso." }, { status: 400 });
 
-    const authUpdate: { email: string; email_confirm: boolean; password?: string; user_metadata: { full_name: string } } = {
-      email, email_confirm: true, user_metadata: { full_name: fullName },
-    };
+    const authUpdate: { email?: string; email_confirm?: boolean; password?: string; user_metadata: { full_name: string } } = { user_metadata: { full_name: fullName } };
+    if (email) { authUpdate.email = email; authUpdate.email_confirm = true; }
     if (body.new_password) authUpdate.password = body.new_password;
     const { error: authError } = await admin.auth.admin.updateUserById(userId, authUpdate);
     if (authError) return NextResponse.json({ error: authError.message }, { status: 400 });
 
     const { error: profileError } = await admin.from("profiles").update({ full_name: fullName, role: body.role }).eq("id", userId);
-    if (profileError) return NextResponse.json({ error: "Dados de acesso atualizados, mas houve falha ao atualizar o perfil: " + profileError.message }, { status: 500 });
-
+    if (profileError) return NextResponse.json({ error: "Falha ao atualizar o perfil: " + profileError.message }, { status: 500 });
     const { error: membershipError } = await admin.from("church_memberships").upsert(
       { user_id: userId, church_id: body.church_id, membership_role: body.role },
       { onConflict: "church_id,user_id" }
     );
-    if (membershipError) return NextResponse.json({ error: "Perfil atualizado, mas não foi possível atualizar o vínculo com a igreja: " + membershipError.message }, { status: 500 });
-
+    if (membershipError) return NextResponse.json({ error: "Perfil atualizado, mas não foi possível atualizar a igreja: " + membershipError.message }, { status: 500 });
     await admin.from("audit_logs").insert({
       actor_id: user.id, action: "user.updated", target_table: "profiles", target_id: userId,
-      details: { email, role: body.role, church_id: body.church_id, password_changed: Boolean(body.new_password) },
+      details: { email_changed: Boolean(email), role: body.role, church_id: body.church_id, password_changed: Boolean(body.new_password) },
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
