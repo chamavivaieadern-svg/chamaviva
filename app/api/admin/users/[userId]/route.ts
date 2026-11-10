@@ -62,7 +62,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
     const fullName = body.full_name?.trim() || "";
     const suppliedEmail = body.email?.trim().toLowerCase() || "";
     const matricula = body.matricula?.trim().toUpperCase().replace(/\s+/g, "") || "";
-    const email = suppliedEmail || (matricula ? \`\${matricula.toLowerCase()}@matricula.chamaviva.invalid\` : "");
+    const email = suppliedEmail || (matricula ? matricula.toLowerCase() + "@matricula.chamaviva.invalid" : "");
     if (!fullName || !body.role || !roles.includes(body.role) || !body.church_id || (!suppliedEmail && !matricula)) {
       return NextResponse.json({ error: "Informe nome, e-mail ou matrícula, função e igreja." }, { status: 400 });
     }
