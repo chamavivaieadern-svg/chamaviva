@@ -2,6 +2,7 @@
 
 import { type FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Flame, LockKeyhole, UserRound } from "lucide-react";
 
 export default function LoginPage() {
@@ -49,7 +50,7 @@ export default function LoginPage() {
   }
 
   return <main className="auth-shell"><section className="auth-card">
-    <a href="/" className="auth-back-link">← Página inicial</a>
+    <Link href="/" className="auth-back-link">← Página inicial</Link>
     <div className="auth-brand"><span><Flame size={27} fill="currentColor"/></span><div><b>CHAMA VIVA</b><small>GESTÃO E EVANGELISMO</small></div></div>
     <p className="auth-kicker">ACESSO SEGURO</p><h1>Bem-vindo de volta</h1><p className="auth-muted">Entre com seu e-mail ou número de matrícula e sua senha.</p>
     {blocked && <p className="auth-error">Esta conta está bloqueada. Procure o administrador.</p>}
