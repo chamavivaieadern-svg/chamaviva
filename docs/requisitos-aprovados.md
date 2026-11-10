@@ -20,7 +20,7 @@ Este documento registra as decisões confirmadas durante o planejamento. Ele ori
 - Motorista: vê viagens atribuídas, rota e localização dos grupos vinculados; compartilha GPS durante viagem ativa, mediante autorização.
 - Participantes e outros perfis: acesso mínimo necessário às próprias atividades.
 - O acesso deve ser aplicado no servidor e no banco de dados (RLS), nunca somente ocultando elementos da interface.
-- Contas individuais por e-mail e senha. 2FA obrigatória com aplicativo autenticador. Primeiro ADM por convite seguro.
+- Contas individuais por e-mail e senha. O ADM cria e gerencia as contas por convite seguro. Não exigir 2FA.
 
 ## Igrejas e regiões
 - O ADM cadastra e administra todas as igrejas e regiões.
@@ -80,11 +80,11 @@ Este documento registra as decisões confirmadas durante o planejamento. Ele ori
 - Validar permissões no servidor em cada operação.
 - Não expor chaves privilegiadas no navegador.
 - Uploads com validação de tipo/tamanho e armazenamento privado quando necessário.
-- 2FA obrigatória, recuperação de conta segura, rate limiting e logs de auditoria.
+- Login por e-mail e senha, recuperação de conta segura, rate limiting e logs de auditoria.
 - Backups e política de retenção para dados de localização.
 - Localização é dado sensível: coletar somente durante atividade ativa e autorizada, informar o usuário e limitar retenção/acesso.
 
 ## Estado da implementação
 - Iniciado: estrutura Next.js/TypeScript, layout base, identidade visual inicial e painel administrativo demonstrativo.
-- Implementado em parte: autenticação Supabase, fluxo de MFA TOTP, rotas administrativas, módulos de igrejas, programação, usuários, viagens, passageiros, grupos, mapa/GPS, mensagens, notificações, PDF e migrations com RLS.
+- Implementado em parte: autenticação Supabase, login por e-mail e senha, rotas administrativas, módulos de igrejas, programação, usuários, viagens, passageiros, grupos, mapa/GPS, mensagens, notificações, PDF e migrations com RLS.
 - Ainda depende de configuração e validação real: variáveis e migrações no projeto Supabase, primeiro ADM, secrets/webhook de e-mail, domínio/redirects, teste de cada perfil e revisão de segurança antes da produção. GPS em segundo plano continua limitado pelos navegadores móveis.
