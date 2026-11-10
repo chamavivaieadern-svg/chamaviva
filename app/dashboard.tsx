@@ -72,6 +72,46 @@ export default function Home() {
     return()=>{alive=false;db.removeChannel(channel);};
   },[]);
   const visibleNavItems=rolePages[role]||["Visão geral"];
+  const quickActionsByRole:Record<string,{label:string;icon:typeof Church;page:string}[]> = {
+    admin:[
+      {label:"Cadastrar igreja",icon:Church,page:"Igrejas e regiões"},
+      {label:"Convidar usuário",icon:Users,page:"Usuários e equipes"},
+      {label:"Criar programação",icon:CalendarDays,page:"Cultos e programação"},
+      {label:"Organizar viagem",icon:Route,page:"Viagens e ônibus"},
+    ],
+    pastor:[
+      {label:"Ver programação",icon:CalendarDays,page:"Cultos e programação"},
+      {label:"Acompanhar viagem",icon:Route,page:"Viagens e ônibus"},
+      {label:"Ver mapa ao vivo",icon:MapPinned,page:"Mapa ao vivo"},
+      {label:"Abrir relatórios",icon:ChartNoAxesCombined,page:"Relatórios"},
+    ],
+    leader:[
+      {label:"Acompanhar viagem",icon:Route,page:"Viagens e ônibus"},
+      {label:"Ver localização",icon:MapPinned,page:"Mapa ao vivo"},
+      {label:"Abrir evangelismo",icon:Compass,page:"Evangelismo"},
+      {label:"Enviar mensagem",icon:MessageSquare,page:"Mensagens e avisos"},
+    ],
+    driver:[
+      {label:"Minha viagem",icon:BusFront,page:"Viagens e ônibus"},
+      {label:"Compartilhar localização",icon:MapPinned,page:"Mapa ao vivo"},
+      {label:"Enviar aviso",icon:MessageSquare,page:"Mensagens e avisos"},
+    ],
+    director:[
+      {label:"Criar programação",icon:CalendarDays,page:"Cultos e programação"},
+      {label:"Ver repertório",icon:Music2,page:"Músicas e repertório"},
+      {label:"Enviar mensagem",icon:MessageSquare,page:"Mensagens e avisos"},
+    ],
+    preacher:[
+      {label:"Ver programação",icon:CalendarDays,page:"Cultos e programação"},
+      {label:"Enviar mensagem",icon:MessageSquare,page:"Mensagens e avisos"},
+    ],
+    musician:[
+      {label:"Ver programação",icon:CalendarDays,page:"Cultos e programação"},
+      {label:"Enviar letras e repertório",icon:Music2,page:"Músicas e repertório"},
+      {label:"Enviar mensagem",icon:MessageSquare,page:"Mensagens e avisos"},
+    ],
+  };
+  const quickActions=quickActionsByRole[role]||[];
   const initials=profileName.split(" ").filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
 
   const grouped = useMemo(() => {
@@ -143,16 +183,16 @@ export default function Home() {
               <button className="banner-close" onClick={() => setShowWelcome(false)} aria-label="Fechar boas-vindas"><X size={17}/></button>
             </section>}
 
-            <div className="section-heading"><div><span className="eyebrow muted-eyebrow">ACOMPANHAMENTO GERAL</span><h2>Visão geral</h2><p>Acompanhe o que está acontecendo em todas as regiões.</p></div><button className="button-primary" onClick={() => navigate("Cultos e programação")}><Plus size={17}/> Nova programação</button></div>
+            <div className="section-heading"><div><span className="eyebrow muted-eyebrow">{role==="admin"?"ACOMPANHAMENTO GERAL":"ÁREA DE TRABALHO"}</span><h2>{role==="driver"?"Área do motorista":"Visão geral"}</h2><p>{role==="admin"?"Acompanhe o que está acontecendo em todas as regiões.":role==="driver"?"Acesse sua viagem, localização e avisos importantes.":"Acesse as atividades disponíveis para sua função."}</p></div>{(role==="admin"||role==="pastor"||role==="director")&&<button className="button-primary" onClick={() => navigate("Cultos e programação")}><Plus size={17}/> Nova programação</button>}</div>
 
-            <section className="stats-grid">
+            {role==="admin"&&<section className="stats-grid">
               <StatCard icon={Church} label="Igrejas cadastradas" value={overviewStats.churches} helper="Dados do Supabase" tint="orange"/>
               <StatCard icon={Users} label="Pessoas e equipes" value={overviewStats.people} helper="Dados visíveis ao seu perfil" tint="yellow"/>
               <StatCard icon={CalendarDays} label="Próximos eventos" value={overviewStats.events} helper="Eventos futuros cadastrados" tint="red"/>
               <StatCard icon={BusFront} label="Viagens em andamento" value={overviewStats.trips} helper="Viagens com status em deslocamento" tint="blue"/>
-            </section>
+            </section>}
 
-            <section className="content-grid">
+            {role!=="driver"&&<section className="content-grid">
               <div className="panel events-panel">
                 <div className="panel-heading"><div><h3>Próximas programações</h3><p>Agenda geral das regiões</p></div><button className="text-button" onClick={() => navigate("Cultos e programação")}>Ver calendário <ArrowUpRight size={15}/></button></div>
                 <div className="event-list">{upcomingEvents.map((event) => <div className="event-row" key={event.id}><div className="date-tile"><strong>{event.day}</strong><span>{event.month}</span></div><div className="event-info"><strong>{event.title}</strong><span><MapPin size={13}/>{event.church}</span></div><div className="event-meta"><span className="event-time"><Clock3 size={13}/>{event.time}</span><span className={`status-pill status-${event.tone}`}>{event.status}</span></div><ChevronRight className="event-chevron" size={17}/></div>)}{upcomingEvents.length===0&&<p className="data-empty">Nenhuma programação futura encontrada para sua conta.</p>}</div>
@@ -163,7 +203,7 @@ export default function Home() {
                 <div className="activity-list">{recentActivities.map((item) => <div className="activity-row" key={item.id}><div className={`activity-icon activity-${item.color}`}><MessageSquare size={17}/></div><div className="activity-copy"><strong>{item.title}</strong><span>{item.detail}</span><small>{item.time}</small></div></div>)}{recentActivities.length===0&&<p className="data-empty">Nenhuma notificação recente.</p>}</div>
                 <button className="panel-footer-button" onClick={() => navigate("Relatórios")}>Ver histórico de atividades <ArrowUpRight size={15}/></button>
               </div>
-            </section>
+            </section>}
 
             <section className="content-grid lower-grid">
               <div className="panel map-panel">
@@ -172,16 +212,13 @@ export default function Home() {
                 
               </div>
               <div className="panel quick-panel">
-                <div className="panel-heading"><div><h3>Acesso rápido</h3><p>Atalhos para tarefas frequentes</p></div></div>
+                <div className="panel-heading"><div><h3>{role==="driver"?"Atalhos do motorista":"Acesso rápido"}</h3><p>{role==="driver"?"Somente ações relacionadas à sua viagem":"Atalhos disponíveis para sua função"}</p></div></div>
                 <div className="quick-actions">
-                  <QuickAction icon={Church} label="Cadastrar igreja" onClick={() => navigate("Igrejas e regiões")}/>
-                  <QuickAction icon={Users} label="Convidar usuário" onClick={() => navigate("Usuários e equipes")}/>
-                  <QuickAction icon={CalendarDays} label="Criar programação" onClick={() => setActive("Cultos e programação")}/>
-                  <QuickAction icon={Route} label="Organizar viagem" onClick={() => navigate("Viagens e ônibus")}/>
+                  {quickActions.map((action)=> <QuickAction key={action.label} icon={action.icon} label={action.label} onClick={() => navigate(action.page)}/>)}
                 </div>
               </div>
             </section>
-            <div className="demo-disclaimer"><CircleAlert size={16}/><span>Os totais e programações são carregados conforme as permissões da sua conta. Se algum módulo estiver vazio, verifique os vínculos da igreja e os dados cadastrados.</span></div>
+            {role==="admin"&&<div className="demo-disclaimer"><CircleAlert size={16}/><span>Os totais e programações são carregados conforme as permissões da sua conta. Se algum módulo estiver vazio, verifique os vínculos da igreja e os dados cadastrados.</span></div>}
           </> : <ModulePlaceholder title={active} icon={current.icon} onBack={() => setActive("Visão geral")}/>}
           <footer className="app-footer"><span><Flame size={14} fill="currentColor"/> CHAMA VIVA</span><span>Organização com propósito.</span><span>Versão inicial • 0.1.0</span></footer>
         </div>
