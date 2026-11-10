@@ -17,23 +17,29 @@ export async function POST(request: Request) {
 
     const body = await request.json() as {
       email?: string;
+      matricula?: string;
       password?: string;
       full_name?: string;
       role?: string;
       church_id?: string;
     };
 
-    const email = body.email?.trim().toLowerCase();
+    const suppliedEmail = body.email?.trim().toLowerCase() || "";
+    const matricula = body.matricula?.trim().toUpperCase().replace(/\\s+/g, "") || "";
+    const email = suppliedEmail || (matricula ? `${matricula.toLowerCase()}@matricula.chamaviva.invalid` : "");
     const fullName = body.full_name?.trim();
     const password = body.password;
 
-    if (!email || !fullName || !password || !body.role || !allowedRoles.includes(body.role) || !body.church_id) {
-      return NextResponse.json({ error: "Preencha nome, e-mail, senha, função e igreja." }, { status: 400 });
+    if (!fullName || !email || (!suppliedEmail && !matricula) || !body.role || !allowedRoles.includes(body.role) || !body.church_id) {
+      return NextResponse.json({ error: "Preencha nome, e-mail ou matrícula, função e igreja." }, { status: 400 });
     }
-    if (password.length < 8) {
-      return NextResponse.json({ error: "A senha inicial precisa ter pelo menos 8 caracteres." }, { status: 400 });
+    if (suppliedEmail && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(suppliedEmail)) {
+      return NextResponse.json({ error: "Informe um e-mail válido." }, { status: 400 });
     }
-
+    if (matricula && !/^[A-Z0-9-]{3,30}$/.test(matricula)) {
+      return NextResponse.json({ error: "A matrícula deve ter de 3 a 30 caracteres: letras, números ou hífen." }, { status: 400 });
+    }
+    if (!password || password.length < 8) return NextResponse.json({ error: "A senha inicial precisa ter pelo menos 8 caracteres." }, { status: 400 });
     // Valida a igreja usando a sessão autenticada e as políticas RLS do ADM.
     const { data: church, error: churchError } = await supabase
       .from("churches")
@@ -49,6 +55,11 @@ export async function POST(request: Request) {
     }
 
     const admin = createAdminClient();
+    if (matricula) {
+      const { data: existingMatricula, error: matriculaError } = await admin.from("profiles").select("id").ilike("matricula", matricula).maybeSingle();
+      if (matriculaError) throw matriculaError;
+      if (existingMatricula) return NextResponse.json({ error: "Este número de matrícula já está cadastrado." }, { status: 409 });
+    }
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password,
@@ -71,6 +82,7 @@ export async function POST(request: Request) {
       full_name: fullName,
       role: body.role,
       status: "active",
+      matricula: matricula || null,
     });
 
     if (profileError) {
@@ -93,10 +105,10 @@ export async function POST(request: Request) {
       action: "user.created_by_admin",
       target_table: "profiles",
       target_id: userId,
-      details: { email, role: body.role, church_id: body.church_id },
+      details: { email: suppliedEmail || null, matricula: matricula || null, role: body.role, church_id: body.church_id },
     });
 
-    return NextResponse.json({ ok: true, created: email });
+    return NextResponse.json({ ok: true, created: fullName, matricula: matricula || null });
   } catch (error) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : "Erro interno ao criar usuário.",
