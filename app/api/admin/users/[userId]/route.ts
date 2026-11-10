@@ -19,7 +19,7 @@ export async function GET() {
     if (auth.error) return auth.error;
     const admin = createAdminClient();
     const [{ data: profiles, error: profilesError }, { data: memberships, error: membershipsError }, { data: authUsers, error: authError }] = await Promise.all([
-      admin.from("profiles").select("id,full_name,role,status,phone,whatsapp,birth_date,address").order("created_at", { ascending: false }),
+      admin.from("profiles").select("id,full_name,matricula,role,status,phone,whatsapp,birth_date,address").order("created_at", { ascending: false }),
       admin.from("church_memberships").select("user_id,church_id"),
       admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     ]);
@@ -30,7 +30,7 @@ export async function GET() {
     const churchByUser = new Map((memberships || []).map((m) => [m.user_id, m.church_id]));
     const users = (profiles || []).map((p) => ({
       ...p,
-      email: emailById.get(p.id) || "",
+      email: (emailById.get(p.id) || "").endsWith("@matricula.chamaviva.invalid") ? "" : (emailById.get(p.id) || ""),
       church_id: churchByUser.get(p.id) || "",
     }));
     return NextResponse.json({ users });
@@ -47,7 +47,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
     const { userId } = await params;
     if (userId === user.id) return NextResponse.json({ error: "Use as configurações da sua própria conta para alterar seus dados." }, { status: 400 });
     const body = await request.json() as {
-      status?: string; full_name?: string; email?: string; role?: string; church_id?: string;
+      status?: string; full_name?: string; email?: string; matricula?: string; role?: string; church_id?: string;
       new_password?: string; phone?: string; whatsapp?: string; birth_date?: string | null; address?: string;
     };
     const admin = createAdminClient();
@@ -83,6 +83,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
       whatsapp: body.whatsapp?.trim() || null,
       birth_date: body.birth_date || null,
       address: body.address?.trim() || null,
+      matricula: matricula || null,
     }).eq("id", userId);
     if (profileError) return NextResponse.json({ error: "Falha ao atualizar o perfil: " + profileError.message }, { status: 500 });
 
@@ -96,7 +97,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
 
     await admin.from("audit_logs").insert({
       actor_id: user.id, action: "user.updated", target_table: "profiles", target_id: userId,
-      details: { email_changed: true, role: body.role, church_id: body.church_id, password_changed: Boolean(body.new_password), personal_info_updated: true },
+      details: { email_changed: Boolean(suppliedEmail), matricula_changed: true, role: body.role, church_id: body.church_id, password_changed: Boolean(body.new_password), personal_info_updated: true },
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
