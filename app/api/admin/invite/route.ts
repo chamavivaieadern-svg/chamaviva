@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const body = await request.json() as { email?: string; matricula?: string; password?: string; full_name?: string; role?: string; church_id?: string };
     const suppliedEmail = body.email?.trim().toLowerCase() || "";
     const matricula = body.matricula?.trim().toUpperCase().replace(/\s+/g, "") || "";
-    const email = suppliedEmail || (matricula ? \`\${matricula.toLowerCase()}@matricula.chamaviva.invalid\` : "");
+    const email = suppliedEmail || (matricula ? matricula.toLowerCase() + "@matricula.chamaviva.invalid" : "");
     const fullName = body.full_name?.trim() || "";
     const password = body.password || "";
 
