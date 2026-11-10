@@ -8,6 +8,7 @@ type Profile = {
   id: string;
   full_name: string;
   email: string;
+  matricula: string | null;
   role: string;
   status: string;
   church_id: string;
@@ -20,6 +21,7 @@ type Church = { id: string; name: string };
 type EditForm = {
   full_name: string;
   email: string;
+  matricula: string;
   new_password: string;
   role: string;
   church_id: string;
@@ -35,6 +37,7 @@ export default function UsersAdmin() {
   const [churches, setChurches] = useState<Church[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [matricula, setMatricula] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("pastor");
   const [church, setChurch] = useState("");
@@ -66,11 +69,11 @@ export default function UsersAdmin() {
     e.preventDefault();
     setBusy(true); setError(""); setNotice("");
     try {
-      const r = await fetch("/api/admin/invite", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: name, email, password, role, church_id: church || undefined }) });
+      const r = await fetch("/api/admin/invite", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: name, email, matricula, password, role, church_id: church || undefined }) });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Falha ao criar usuário.");
-      setNotice("Usuário criado com sucesso. Ele já pode entrar com o e-mail e a senha definida.");
-      setName(""); setEmail(""); setPassword(""); setRole("pastor"); setChurch("");
+      setNotice("Usuário criado com sucesso. O acesso pode ser feito pelo e-mail ou pela matrícula cadastrada.");
+      setName(""); setEmail(""); setMatricula(""); setPassword(""); setRole("pastor"); setChurch("");
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Erro ao criar usuário."); }
     finally { setBusy(false); }
@@ -81,6 +84,7 @@ export default function UsersAdmin() {
     setEditForm({
       full_name: user.full_name || "",
       email: user.email || "",
+      matricula: user.matricula || "",
       new_password: "",
       role: user.role,
       church_id: user.church_id || "",
@@ -107,6 +111,7 @@ export default function UsersAdmin() {
         body: JSON.stringify({
           full_name: editForm.full_name,
           email: editForm.email,
+          matricula: editForm.matricula,
           new_password: editForm.new_password || undefined,
           role: editForm.role,
           church_id: editForm.church_id,
@@ -155,10 +160,11 @@ export default function UsersAdmin() {
     {notice && <p className="module-success" role="status">{notice}</p>}
 
     <form className="invite-panel" onSubmit={createUser}>
-      <div className="invite-heading"><UserPlus size={19}/><div><b>Criar usuário</b><small>A conta será criada na hora. Informe a senha inicial para a pessoa já poder acessar o sistema.</small></div></div>
+      <div className="invite-heading"><UserPlus size={19}/><div><b>Criar usuário</b><small>A conta será criada na hora. Informe pelo menos um acesso: e-mail ou matrícula, e defina a senha inicial.</small></div></div>
       <div className="invite-fields">
         <label>Nome completo<input required value={name} onChange={e => setName(e.target.value)} placeholder="Nome do usuário" autoComplete="name"/></label>
-        <label>E-mail<input required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="nome@email.com" autoComplete="email"/></label>
+        <label>E-mail (opcional)<input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="nome@email.com" autoComplete="email"/></label>
+        <label>Número de matrícula (opcional)<input value={matricula} onChange={e => setMatricula(e.target.value.toUpperCase())} placeholder="Ex.: CV-0001" autoComplete="off"/></label>
         <label>Senha inicial<div className="password-field"><input required type={showPassword ? "text" : "password"} minLength={8} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo de 8 caracteres"/><button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div></label>
         <label>Função<select value={role} onChange={e => setRole(e.target.value)}>{roles.map(([v,l]) => <option value={v} key={v}>{l}</option>)}</select></label>
         <label>Igreja/região<select required value={church} onChange={e => setChurch(e.target.value)}><option value="">Selecione uma igreja</option>{churches.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
@@ -170,7 +176,8 @@ export default function UsersAdmin() {
       <div className="invite-heading"><Pencil size={19}/><div><b>Editar usuário</b><small>Atualize os dados abaixo. Deixe a nova senha vazia para manter a senha atual.</small></div></div>
       <div className="invite-fields">
         <label>Nome completo<input required value={editForm.full_name} onChange={e => updateEdit("full_name", e.target.value)} autoComplete="name"/></label>
-        <label>E-mail de acesso<input required type="email" value={editForm.email} onChange={e => updateEdit("email", e.target.value)} autoComplete="email"/></label>
+        <label>E-mail (opcional)<input type="email" value={editForm.email} onChange={e => updateEdit("email", e.target.value)} autoComplete="email"/></label>
+        <label>Número de matrícula (opcional)<input value={editForm.matricula} onChange={e => updateEdit("matricula", e.target.value.toUpperCase())} placeholder="Ex.: CV-0001"/></label>
         <label>Nova senha<input type="password" minLength={8} value={editForm.new_password} onChange={e => updateEdit("new_password", e.target.value)} placeholder="Deixe vazio para manter"/></label>
         <label>Telefone<input type="tel" value={editForm.phone} onChange={e => updateEdit("phone", e.target.value)} placeholder="(00) 00000-0000"/></label>
         <label>WhatsApp<input type="tel" value={editForm.whatsapp} onChange={e => updateEdit("whatsapp", e.target.value)} placeholder="(00) 00000-0000"/></label>
@@ -187,8 +194,8 @@ export default function UsersAdmin() {
 
     <section className="users-table-panel">
       <div className="users-table-heading"><div><b>Contas cadastradas</b><small>{users.length} usuário(s)</small></div><span><ShieldCheck size={15}/> Acesso administrativo</span></div>
-      <div className="users-table-scroll"><table><thead><tr><th>Nome / e-mail</th><th>Função</th><th>Status</th><th>Ações</th></tr></thead><tbody>
-        {users.map(u => <tr key={u.id}><td><b>{u.full_name || "Sem nome"}</b><small>{u.email || u.id.slice(0,8) + "…"}</small></td><td>{roles.find(r => r[0] === u.role)?.[1] || u.role}</td><td><span className={"user-status " + u.status}>{u.status === "active" ? "Ativo" : u.status === "blocked" ? "Bloqueado" : "Pendente"}</span></td><td><div className="user-actions"><button type="button" onClick={() => startEdit(u)} title="Editar usuário" disabled={busy}><Pencil size={15}/></button>{u.status === "blocked" ? <button type="button" onClick={() => changeStatus(u.id,"active")} title="Reativar" disabled={busy}><Unlock size={15}/></button> : <button type="button" onClick={() => changeStatus(u.id,"blocked")} title="Bloquear" disabled={busy}><Lock size={15}/></button>}<button type="button" className="danger-action" onClick={() => remove(u.id)} title="Remover" disabled={busy}><Trash2 size={15}/></button></div></td></tr>)}
+      <div className="users-table-scroll"><table><thead><tr><th>Nome / acesso</th><th>Função</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+        {users.map(u => <tr key={u.id}><td><b>{u.full_name || "Sem nome"}</b><small>{u.email || "Sem e-mail"}{u.matricula ? " • Matrícula: " + u.matricula : ""}</small></td><td>{roles.find(r => r[0] === u.role)?.[1] || u.role}</td><td><span className={"user-status " + u.status}>{u.status === "active" ? "Ativo" : u.status === "blocked" ? "Bloqueado" : "Pendente"}</span></td><td><div className="user-actions"><button type="button" onClick={() => startEdit(u)} title="Editar usuário" disabled={busy}><Pencil size={15}/></button>{u.status === "blocked" ? <button type="button" onClick={() => changeStatus(u.id,"active")} title="Reativar" disabled={busy}><Unlock size={15}/></button> : <button type="button" onClick={() => changeStatus(u.id,"blocked")} title="Bloquear" disabled={busy}><Lock size={15}/></button>}<button type="button" className="danger-action" onClick={() => remove(u.id)} title="Remover" disabled={busy}><Trash2 size={15}/></button></div></td></tr>)}
       </tbody></table></div>
     </section>
   </div>;
