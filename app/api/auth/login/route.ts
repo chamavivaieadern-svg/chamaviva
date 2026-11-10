@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       const admin = createAdminClient();
       const { data: profile, error } = await admin.from("profiles").select("id,status").ilike("matricula", matricula).maybeSingle();
       if (error) throw error;
-      if (!profile) return NextResponse.json({ error: "Matrícula não encontrada. Confira o número ou procure o administrador." }, { status: 401 });
+      if (!profile) return NextResponse.json({ error: "E-mail/matrícula ou senha incorretos." }, { status: 401 });
       if (profile.status !== "active") return NextResponse.json({ error: "Esta conta não está ativa. Procure o administrador." }, { status: 403 });
       const { data: authData, error: authLookupError } = await admin.auth.admin.getUserById(profile.id);
       if (authLookupError || !authData.user?.email) return NextResponse.json({ error: "Não foi possível localizar o acesso desta matrícula." }, { status: 401 });
