@@ -29,13 +29,13 @@ export default function ModuleActions({section,onCreated}:{section:string;onCrea
    if(section==="viagens"){
     const origin=await resolvePlusCode(form.origin_plus_code);
     const destination=await resolvePlusCode(form.destination_plus_code);
-    result=await db.from("trips").insert({church_id:form.church_id,title:form.title,origin:form.origin||null,destination:form.destination||null,origin_latitude:origin?.latitude??null,origin_longitude:origin?.longitude??null,destination_latitude:destination?.latitude??null,destination_longitude:destination?.longitude??null,origin_plus_code:form.origin_plus_code||null,destination_plus_code:form.destination_plus_code||null,departure_at:form.departure_at?new Date(form.departure_at).toISOString():null,driver_id:form.driver_id||null,vehicle_id:form.vehicle_id||null,created_by:userId});
+    result=await db.from("trips").insert({church_id:form.church_id,title:form.title,origin:form.origin||null,destination:form.destination||null,origin_latitude:origin?.latitude??null,origin_longitude:origin?.longitude??null,destination_latitude:destination?.latitude??null,destination_longitude:destination?.longitude??null,departure_at:form.departure_at?new Date(form.departure_at).toISOString():null,driver_id:form.driver_id||null,vehicle_id:form.vehicle_id||null,created_by:userId});
    }
    if(section==="evangelismo")result=await db.from("evangelism_groups").insert({church_id:form.church_id,name:form.name,leader_id:form.leader_id,trip_id:form.trip_id||null});
    if(section==="mensagens")result=await db.from("messages").insert({sender_id:userId,recipient_id:form.recipient_id,subject:form.subject||null,body:form.body});
    if(section==="mapa"){
     const point=await resolvePlusCode(form.plus_code);
-    result=await db.from("crossada_locations").insert({church_id:form.church_id,name:form.name,address:form.address||null,plus_code:form.plus_code||null,latitude:point?.latitude??null,longitude:point?.longitude??null,created_by:userId});
+    result=await db.from("crossada_locations").insert({church_id:form.church_id,name:form.name,address:form.address||null,latitude:point?.latitude??null,longitude:point?.longitude??null,created_by:userId});
    }
    if(section==="documentos"){
     if(!file)throw new Error("Selecione um arquivo.");
