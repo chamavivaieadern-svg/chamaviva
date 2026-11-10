@@ -7,7 +7,7 @@ const permissions: Record<string, string[]> = {
   programacao: ["admin", "pastor", "director", "preacher", "musician"],
   musicas: ["admin", "pastor", "director", "musician"],
   viagens: ["admin", "pastor", "driver", "leader"],
-  evangelismo: ["admin", "pastor", "leader", "driver"],
+  evangelismo: ["admin", "pastor", "leader"],
   mensagens: ["admin", "pastor", "leader", "driver", "director", "preacher", "musician"],
   documentos: ["admin"],
   mapa: ["admin", "pastor", "leader", "driver"],
