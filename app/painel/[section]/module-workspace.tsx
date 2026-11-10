@@ -31,6 +31,7 @@ function fmt(v:unknown){if(v===null||v===undefined||v==="")return "—";if(typeo
 export default function ModuleWorkspace({section}:{section:string}){
  const config=modules[section];const [rows,setRows]=useState<Record<string,unknown>[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState("");const [role,setRole]=useState("");
  async function load(){setLoading(true);setError("");try{const db=createClient();const {data:{user}}=await db.auth.getUser();if(user){const {data:p}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();setRole(p?.role||"");}
+  if(section==="configuracoes"){setRows([]);return;}
   let query=db.from(config.table).select(config.columns.join(",")).order(section==="mapa"?"recorded_at":"created_at",{ascending:false}).limit(100);
   if(section==="mensagens"&&user)query=query.or("sender_id.eq."+user.id+",recipient_id.eq."+user.id);
   const {data,error}=await query;if(error)throw error;
@@ -39,7 +40,7 @@ export default function ModuleWorkspace({section}:{section:string}){
   setRows(records);
  }catch(e){setError(e instanceof Error?e.message:"Não foi possível carregar os dados.");}finally{setLoading(false);}}
  useEffect(()=>{load();},[section]);
- useEffect(()=>{const db=createClient();const channel=db.channel("module-live-"+section).on("postgres_changes",{event:"*",schema:"public",table:config.table},()=>load()).subscribe();return()=>{db.removeChannel(channel);};},[section]);
+ useEffect(()=>{if(section==="configuracoes")return;const db=createClient();const channel=db.channel("module-live-"+section).on("postgres_changes",{event:"*",schema:"public",table:config.table},()=>load()).subscribe();return()=>{db.removeChannel(channel);};},[section]);
  const Icon=config.icon==="church"?Church:config.icon==="calendar"?CalendarDays:config.icon==="music"?Music2:config.icon==="bus"?BusFront:config.icon==="users"?Users:config.icon==="message"?MessageSquare:config.icon==="file"?FileText:MapPin;
  async function approve(id:unknown,status:string){const db=createClient();const {error}=await db.rpc("review_song",{target_song:String(id),decision:status});if(error)setError(error.message);else load();}
  return <main className="module-page"><ModuleNav/><div className="workspace-head"><div className="workspace-icon-large"><Icon size={24}/></div><div><span className="auth-kicker">CHAMA VIVA • MÓDULO</span><h1>{config.title}</h1><p>{config.description}</p></div><button className="module-refresh" onClick={load}><RefreshCw size={15}/> Atualizar</button></div>
@@ -54,7 +55,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  {section==="mapa"&&<div className="map-info-card"><MapPin size={19}/><div><b>Localização compartilhada com consentimento</b><p>As posições são registradas somente durante viagens ou evangelismos ativos. A tabela abaixo mostra o horário real da última atualização; não representa rastreamento em tempo real enquanto não houver um dispositivo enviando GPS.</p></div></div>}
  {section==="musicas"&&["admin","director"].includes(role)&&<div className="map-info-card"><CheckCircle2 size={18}/><div><b>Aprovação do dirigente</b><p>Somente letras aprovadas podem entrar na programação oficial.</p></div></div>}
  {section!=="igrejas"&&error&&<p className="module-error"><AlertCircle size={15}/>{error}</p>}
- {section!=="igrejas"&&<section className="data-panel"><div className="data-panel-head"><b>Registros</b><span>{rows.length} registro(s)</span></div>
+ {section!=="igrejas"&&section!=="configuracoes"&&<section className="data-panel"><div className="data-panel-head"><b>Registros</b><span>{rows.length} registro(s)</span></div>
  {loading?<p className="data-empty">Carregando...</p>:rows.length===0?<div className="data-empty">Nenhum registro encontrado. Quando houver dados cadastrados e vinculados ao seu perfil, eles aparecerão aqui.</div>:<div className="data-table-wrap"><table><thead><tr>{config.columns.map(c=><th key={c}>{labels[c]||c}</th>)}{section==="musicas"&&role==="director"&&<th>Aprovação</th>}</tr></thead><tbody>{rows.map((row,i)=><tr key={String(row.id||i)}>{config.columns.map(c=><td key={c}>{c==="status"?<span className={"user-status "+String(row[c])}>{fmt(row[c])}</span>:fmt(row[c])}</td>)}{section==="musicas"&&role==="director"&&<td>{row.status==="pending"?<div className="user-actions"><button onClick={()=>approve(row.id,"approved")} title="Aprovar"><CheckCircle2 size={15}/></button><button className="danger-action" onClick={()=>approve(row.id,"rejected")} title="Rejeitar"><AlertCircle size={15}/></button></div>:fmt(row.status)}</td>}</tr>)}</tbody></table></div>}
  </section>}
  </main>;
