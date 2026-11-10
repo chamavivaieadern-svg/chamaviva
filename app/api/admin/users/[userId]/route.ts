@@ -47,11 +47,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
 
     const { error: profileError } = await admin.from("profiles").update({ full_name: fullName, role: body.role }).eq("id", userId);
     if (profileError) return NextResponse.json({ error: "Falha ao atualizar o perfil: " + profileError.message }, { status: 500 });
+
+    // Garante que cada usuário comum permaneça vinculado somente à igreja selecionada.
     const { error: membershipError } = await admin.from("church_memberships").upsert(
       { user_id: userId, church_id: body.church_id, membership_role: body.role },
       { onConflict: "church_id,user_id" }
     );
     if (membershipError) return NextResponse.json({ error: "Perfil atualizado, mas não foi possível atualizar a igreja: " + membershipError.message }, { status: 500 });
+
+    const { error: oldMembershipsError } = await admin
+      .from("church_memberships")
+      .delete()
+      .eq("user_id", userId)
+      .neq("church_id", body.church_id);
+    if (oldMembershipsError) return NextResponse.json({ error: "Perfil atualizado, mas não foi possível remover o vínculo antigo com outra igreja: " + oldMembershipsError.message }, { status: 500 });
+
     await admin.from("audit_logs").insert({
       actor_id: user.id, action: "user.updated", target_table: "profiles", target_id: userId,
       details: { email_changed: Boolean(email), role: body.role, church_id: body.church_id, password_changed: Boolean(body.new_password) },
