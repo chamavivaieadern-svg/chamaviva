@@ -10,9 +10,6 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 
-    const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (assurance?.currentLevel !== "aal2") return NextResponse.json({ error: "Confirme sua autenticação de dois fatores." }, { status: 403 });
-
     const { data: profile } = await supabase.from("profiles").select("role,status").eq("id",user.id).single();
     if (profile?.role !== "admin" || profile.status !== "active") return NextResponse.json({ error: "Somente o ADM pode convidar usuários." }, { status: 403 });
 
