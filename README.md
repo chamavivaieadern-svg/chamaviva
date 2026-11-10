@@ -24,8 +24,8 @@ Sistema de gestão de igrejas, cultos, viagens, comunicação e equipes de evang
 ## Segurança e implantação
 - Usuários novos começam sem privilégios (role pending). O primeiro ADM deve ser provisionado manualmente e com identidade verificada.
 - Convites administrativos exigem sessão ADM ativa e MFA AAL2.
-- MFA TOTP está preparado; configure o provedor no Supabase Authentication > Multi-Factor Authentication.
-- Mantenha RLS habilitado; AAL2 é exigido também pelas políticas do banco e pelas rotas administrativas. Revise as políticas antes de produção.
+- O acesso usa e-mail e senha individuais. O ADM cria, convida, bloqueia e remove contas; MFA/TOTP não é obrigatório.
+- Mantenha RLS habilitado: as políticas exigem sessão autenticada e respeitam função, status e vínculo com a igreja.
 - GPS somente durante viagem/evangelismo ativo e após consentimento explícito.
 - Não publique com dados demonstrativos como se fossem dados reais.
 

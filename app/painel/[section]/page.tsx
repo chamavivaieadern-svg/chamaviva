@@ -23,11 +23,6 @@ export default async function SectionPage({ params }: { params: Promise<{ sectio
   const { data: { user } } = await db.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: factors } = await db.auth.mfa.listFactors();
-  const verified = factors?.totp?.some((factor) => factor.status === "verified");
-  const { data: assurance } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (!verified || !assurance || assurance.currentLevel !== "aal2") redirect("/seguranca/2fa");
-
   const { data: profile } = await db
     .from("profiles")
     .select("role,status")

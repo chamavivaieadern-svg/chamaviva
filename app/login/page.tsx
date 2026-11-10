@@ -29,11 +29,6 @@ export default function LoginPage() {
       const supabase = createClient();
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      const hasTotp = factors?.totp?.some(f => f.status === "verified");
-      if (!hasTotp) { router.push("/seguranca/2fa"); return; }
-      const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (!assurance || assurance.currentLevel !== "aal2") { router.push("/seguranca/2fa"); return; }
       const next = new URLSearchParams(window.location.search).get("next");
       router.push(next?.startsWith("/") && !next.startsWith("//") ? next : "/painel");
       router.refresh();
