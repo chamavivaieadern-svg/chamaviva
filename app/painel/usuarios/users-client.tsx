@@ -160,7 +160,7 @@ export default function UsersAdmin() {
     {notice && <p className="module-success" role="status">{notice}</p>}
 
     <form className="invite-panel" onSubmit={createUser}>
-      <div className="invite-heading"><UserPlus size={19}/><div><b>Criar usuário</b><small>A conta será criada na hora. Informe a senha inicial para a pessoa já poder acessar o sistema.</small></div></div>
+      <div className="invite-heading"><UserPlus size={19}/><div><b>Criar usuário</b><small>A conta será criada na hora. Informe pelo menos um acesso: e-mail ou matrícula, e defina a senha inicial.</small></div></div>
       <div className="invite-fields">
         <label>Nome completo<input required value={name} onChange={e => setName(e.target.value)} placeholder="Nome do usuário" autoComplete="name"/></label>
         <label>E-mail (opcional)<input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="nome@email.com" autoComplete="email"/></label>
