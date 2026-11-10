@@ -31,11 +31,8 @@ export async function GET(request: Request) {
   }
 
   if (verified) {
-    if (type === "recovery" || next === "/auth/reset-password") {
+    if (type === "recovery" || type === "invite" || next === "/auth/reset-password") {
       return NextResponse.redirect(new URL("/auth/reset-password", origin));
-    }
-    if (type === "invite") {
-      return NextResponse.redirect(new URL("/login?invite=accepted", origin));
     }
     return NextResponse.redirect(new URL("/login", origin));
   }
