@@ -15,8 +15,8 @@ export default function TripPassengers(){
  const [pastedList,setPastedList]=useState(""),[drafts,setDrafts]=useState<DraftPassenger[]>([]);
  const [editingId,setEditingId]=useState<string|null>(null),[editName,setEditName]=useState(""),[editNotes,setEditNotes]=useState("");
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[success,setSuccess]=useState("");
- async function load(){const db=createClient();const [t,v]=await Promise.all([db.from("trips").select("id,title,vehicle_id").order("created_at",{ascending:false}),db.from("vehicles").select("id,name,capacity")]);setTrips(t.data||[]);setVehicles(v.data||[]);if(!tripId&&t.data?.length)setTripId(t.data[0].id);}
- async function loadPassengers(id:string){if(!id){setPeople([]);return;}const db=createClient();const {data,error}=await db.from("trip_passengers").select("id,full_name,boarding_status,notes").eq("trip_id",id).order("created_at");if(error)setError(error.message);else setPeople(data||[]);}
+ async function load(){const db=createClient();setError("");const [t,v]=await Promise.all([db.from("trips").select("id,title,vehicle_id").order("created_at",{ascending:false}),db.from("vehicles").select("id,name,capacity")]);if(t.error)throw t.error;if(v.error)throw v.error;setTrips(t.data||[]);setVehicles(v.data||[]);if(!tripId&&t.data?.length)setTripId(t.data[0].id);}
+ async function loadPassengers(id:string){if(!id){setPeople([]);return;}const db=createClient();const {data,error}=await db.from("trip_passengers").select("id,full_name,boarding_status,notes").eq("trip_id",id).order("created_at");if(error){setError(error.message);return;}setPeople(data||[]);}
  useEffect(()=>{load();},[]);
  useEffect(()=>{loadPassengers(tripId);setDrafts([]);setPastedList("");setEditingId(null);},[tripId]);
  useEffect(()=>{if(!tripId)return;const db=createClient();const channel=db.channel("passengers-live-"+tripId).on("postgres_changes",{event:"*",schema:"public",table:"trip_passengers",filter:"trip_id=eq."+tripId},()=>loadPassengers(tripId)).subscribe();return()=>{db.removeChannel(channel);};},[tripId]);
