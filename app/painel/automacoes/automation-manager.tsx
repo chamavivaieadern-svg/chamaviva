@@ -30,7 +30,7 @@ export default function AutomationManager(){
   {error&&<p className="module-error"><AlertCircle size={14}/>{error}</p>}{notice&&<p className="module-success">{notice}</p>}
   <div style={{display:"grid",gap:10}}>
    {loading?<p className="data-empty">Carregando automações...</p>:rules.map(rule=><article key={rule.id} style={{display:"flex",gap:12,alignItems:"center",justifyContent:"space-between",border:"1px solid #eee2d8",borderRadius:11,padding:13,flexWrap:"wrap"}}>
-    <div style={{display:"grid",gap:4,flex:1,minWidth:190}}><b style={{fontSize:13}}>{rule.name}</b><small style={{fontSize:11,color:"#88796f"}}>{rule.description}</small><small style={{fontSize:10,color:"#a34d13"}}{eventNames[rule.event_key]||rule.event_key}</small></div>
+    <div style={{display:"grid",gap:4,flex:1,minWidth:190}}><b style={{fontSize:13}}>{rule.name}</b><small style={{fontSize:11,color:"#88796f"}}>{rule.description}</small><small style={{fontSize:10,color:"#a34d13"}}>{eventNames[rule.event_key]||rule.event_key}</small></div>
     <button type="button" className={rule.enabled?"module-primary":"module-secondary"} disabled={busy===rule.id} onClick={()=>toggle(rule)}>{rule.enabled?<><CheckCircle2 size={14}/> Ativa</>:<><PauseCircle size={14}/> Pausada</>}</button>
    </article>)}
   </div>
