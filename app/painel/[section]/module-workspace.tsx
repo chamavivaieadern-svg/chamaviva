@@ -30,13 +30,14 @@ const modules:Record<string,{title:string;description:string;table:string;icon:s
  configuracoes:{title:"Configurações",description:"Dados básicos da sua conta no CHAMA VIVA.",table:"profiles",icon:"file",columns:["full_name","role","status","created_at"]},
  permissoes:{title:"Permissões de acesso",description:"Libere somente as funções necessárias para cada pessoa.",table:"profiles",icon:"file",columns:["full_name","role","status"]},
  "gestao-viagens":{title:"Gestão de viagens",description:"Área limitada às funções liberadas pelo administrador.",table:"trips",icon:"bus",columns:["title","origin","destination","status"]},
+ atividades:{title:"Viagens e evangelismo",description:"Inicie uma viagem ou um evangelismo em um só lugar e acompanhe os passageiros.",table:"trips",icon:"bus",columns:["title","origin","destination","status"]},
 };
 const labels:Record<string,string>={name:"Nome",region:"Região",city:"Cidade",state:"Estado",title:"Título",event_type:"Tipo",starts_at:"Início",status:"Situação",artist:"Artista",lyrics:"Letra enviada",created_at:"Criado em",origin:"Origem",destination:"Destino",departure_at:"Saída",leader_id:"Líder (ID)",trip_id:"Viagem (ID)",subject:"Assunto",body:"Mensagem",sender_id:"De",recipient_id:"Para",label:"Descrição",storage_path:"Arquivo",is_official:"Logo oficial",group_id:"Grupo",latitude:"Latitude",longitude:"Longitude",recorded_at:"Atualizado em"};
 function fmt(v:unknown){if(v===null||v===undefined||v==="")return "—";if(typeof v==="boolean")return v?"Sim":"Não";if(typeof v==="string"&&/^\d{4}-\d\d-\d\dT/.test(v))return new Date(v).toLocaleString("pt-BR");const statusLabels:Record<string,string>={draft:"Rascunho",published:"Publicada",pending:"Aguardando aprovação",approved:"Aprovada",rejected:"Rejeitada",scheduled:"Programada",awaiting_departure:"Aguardando saída",in_progress:"Em deslocamento",arrived:"Chegou ao destino",completed:"Concluída",issue:"Com ocorrência",active:"Ativo",planned:"Planejado",cancelled:"Cancelada",blocked:"Bloqueado",expected:"Aguardando",boarded:"Embarcou",disembarked:"Desembarcou",absent:"Não compareceu"};if(typeof v==="string"&&statusLabels[v])return statusLabels[v];if(typeof v==="string"&&v.length>42)return v.slice(0,39)+"…";return String(v);}
 export default function ModuleWorkspace({section}:{section:string}){
  const config=modules[section];const [rows,setRows]=useState<Record<string,unknown>[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState("");const [role,setRole]=useState("");const [canManageLocations,setCanManageLocations]=useState(false);const [canManageParticipants,setCanManageParticipants]=useState(false);
  async function load(){setLoading(true);setError("");try{const db=createClient();const {data:{user}}=await db.auth.getUser();if(user){const {data:p}=await db.from("profiles").select("role,can_manage_locations,can_manage_participants").eq("id",user.id).maybeSingle();setRole(p?.role||"");setCanManageLocations(p?.role==="admin"||Boolean(p?.can_manage_locations));setCanManageParticipants(p?.role==="admin"||Boolean(p?.can_manage_participants));}
-  if(section==="configuracoes"||section==="permissoes"||section==="gestao-viagens"){setRows([]);return;}
+  if(section==="configuracoes"||section==="permissoes"||section==="gestao-viagens"||section==="atividades"){setRows([]);return;}
   let query=db.from(config.table).select(config.columns.join(",")).order(section==="mapa"?"recorded_at":"created_at",{ascending:false}).limit(100);
   if(section==="mensagens"&&user)query=query.or("sender_id.eq."+user.id+",recipient_id.eq."+user.id);
   const {data,error}=await query;if(error)throw error;
@@ -57,13 +58,14 @@ export default function ModuleWorkspace({section}:{section:string}){
  {section==="configuracoes"&&<AccountSettings/>}
  {section==="permissoes"&&<AccessControlManager/>}
  {section==="gestao-viagens"&&<TripManagerHome/>}
+ {section==="atividades"&&<><LocationControls/><TripPassengers/></>}
  {section==="mapa"&&canManageLocations&&<RoutePlanner/>}
- {(section==="mapa"||section==="evangelismo")&&role!=="trip_manager"&&<LocationControls/>}
+ {section==="mapa"&&role!=="trip_manager"&&role!=="leader"&&<LocationControls/>}
  {(section==="mapa"||section==="evangelismo")&&<LocationMap/>}
  {section==="mapa"&&<div className="map-info-card"><MapPin size={19}/><div><b>Localização compartilhada com consentimento</b><p>As posições são registradas somente durante viagens ou evangelismos ativos. A tabela abaixo mostra o horário real da última atualização; não representa rastreamento em tempo real enquanto não houver um dispositivo enviando GPS.</p></div></div>}
  {section==="musicas"&&["admin","director"].includes(role)&&<div className="map-info-card"><CheckCircle2 size={18}/><div><b>Aprovação do dirigente</b><p>Somente letras aprovadas podem entrar na programação oficial.</p></div></div>}
- {section!=="igrejas"&&section!=="permissoes"&&section!=="gestao-viagens"&&error&&<p className="module-error"><AlertCircle size={15}/>{error}</p>}
- {section!=="igrejas"&&section!=="configuracoes"&&section!=="permissoes"&&section!=="gestao-viagens"&&<section className="data-panel"><div className="data-panel-head"><b>Registros</b><span>{rows.length} registro(s)</span></div>
+ {section!=="igrejas"&&section!=="permissoes"&&section!=="gestao-viagens"&&section!=="atividades"&&error&&<p className="module-error"><AlertCircle size={15}/>{error}</p>}
+ {section!=="igrejas"&&section!=="configuracoes"&&section!=="permissoes"&&section!=="gestao-viagens"&&section!=="atividades"&&<section className="data-panel"><div className="data-panel-head"><b>Registros</b><span>{rows.length} registro(s)</span></div>
  {loading?<p className="data-empty">Carregando...</p>:rows.length===0?<div className="data-empty">Nenhum registro encontrado. Quando houver dados cadastrados e vinculados ao seu perfil, eles aparecerão aqui.</div>:<div className="data-table-wrap"><table><thead><tr>{config.columns.map(c=><th key={c}>{labels[c]||c}</th>)}{section==="musicas"&&role==="director"&&<th>Aprovação</th>}</tr></thead><tbody>{rows.map((row,i)=><tr key={String(row.id||i)}>{config.columns.map(c=><td key={c}>{c==="status"?<span className={"user-status "+String(row[c])}>{fmt(row[c])}</span>:fmt(row[c])}</td>)}{section==="musicas"&&role==="director"&&<td>{row.status==="pending"?<div className="user-actions"><button onClick={()=>approve(row.id,"approved")} title="Aprovar"><CheckCircle2 size={15}/></button><button className="danger-action" onClick={()=>approve(row.id,"rejected")} title="Rejeitar"><AlertCircle size={15}/></button></div>:fmt(row.status)}</td>}</tr>)}</tbody></table></div>}
  </section>}
  </main>;
