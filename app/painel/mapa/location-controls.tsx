@@ -34,9 +34,10 @@ export default function LocationControls(){
    const alreadyActive=kind==="trip"?(item as Trip).status==="in_progress":(item as Group).status==="active";
    if(!alreadyActive){const rpc=await db.rpc(kind==="trip"?"start_trip_tracking":"start_group_sharing",kind==="trip"?{target_trip:item.id}:{target_group:item.id});if(rpc.error)throw rpc.error;}
    setActive({kind,id:item.id,label:kind==="trip"?(item as Trip).title:(item as Group).name});lastSent.current=Date.now();
+   let initialError="";
    const {data:{user}}=await db.auth.getUser();if(user){
     const row={user_id:user.id,latitude:initial.coords.latitude,longitude:initial.coords.longitude,accuracy_m:initial.coords.accuracy,...(kind==="trip"?{trip_id:item.id}:{group_id:item.id})};
-    const {error}=await db.from("live_locations").insert(row as never);if(error)throw error;
+    const {error}=await db.from("live_locations").insert(row as never);if(error)initialError="Atividade iniciada, mas não foi possível enviar a primeira posição: "+error.message;
    }
    watchRef.current=navigator.geolocation.watchPosition(async(position)=>{
     const now=Date.now();if(now-lastSent.current<10000)return;lastSent.current=now;
@@ -44,16 +45,16 @@ export default function LocationControls(){
     const row={user_id:user.id,latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy_m:position.coords.accuracy,...(kind==="trip"?{trip_id:item.id}:{group_id:item.id})};
     const {error}=await db.from("live_locations").insert(row as never);if(error)setMessage("Não foi possível enviar a posição: "+error.message);else setMessage("Localização compartilhada. Último envio: "+new Date().toLocaleTimeString("pt-BR"));
    },error=>setMessage("GPS indisponível: "+error.message),{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
-   setMessage("Atividade iniciada. Mantenha esta tela aberta para enviar posições.");
+   setMessage(initialError||"Atividade iniciada. Mantenha esta tela aberta para enviar posições.");
   }catch(e){setMessage(e instanceof Error?e.message:"Não foi possível iniciar o GPS.");}
   finally{setBusy(false);}
  }
  async function stop(){
   if(!active)return;setBusy(true);
   try{
-   if(watchRef.current!==null)navigator.geolocation.clearWatch(watchRef.current);watchRef.current=null;
    const {error}=await db.rpc(active.kind==="trip"?"finish_trip_tracking":"finish_group_sharing",active.kind==="trip"?{target_trip:active.id,final_status:finishStatus}:{target_group:active.id});
    if(error)throw error;
+   if(watchRef.current!==null)navigator.geolocation.clearWatch(watchRef.current);watchRef.current=null;
    setMessage("Atividade encerrada e compartilhamento de localização interrompido.");setActive(null);await load();
   }catch(e){setMessage(e instanceof Error?e.message:"Não foi possível encerrar a atividade.");}
   finally{setBusy(false);}
