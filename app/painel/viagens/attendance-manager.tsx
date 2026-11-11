@@ -28,7 +28,7 @@ export default function AttendanceManager(){
  async function loadBase(){
   setLoading(true);setError("");
   const {data:{user}}=await db.auth.getUser();setUserId(user?.id||"");
-  if(user){const {data:p}=await db.from("profiles").select("role,can_manage_roll_calls,can_manage_checklists").eq("id",user.id).maybeSingle();setRole(p?.role||"");setCanManageRollCalls(Boolean(p?.can_manage_roll_calls));setCanManageChecklists(Boolean(p?.can_manage_checklists));}
+  if(user){const {data:p}=await db.from("profiles").select("role,can_manage_roll_calls,can_manage_checklists").eq("id",user.id).maybeSingle();setRole(p?.role||"");if(p?.role==="leader")setPhase("group");setCanManageRollCalls(Boolean(p?.can_manage_roll_calls));setCanManageChecklists(Boolean(p?.can_manage_checklists));}
   const [t,g,p,templatesResult]=await Promise.all([
    db.from("trips").select("id,title,church_id").order("created_at",{ascending:false}).limit(100),
    db.from("evangelism_groups").select("id,name,trip_id,church_id,leader_id").order("created_at",{ascending:false}).limit(200),
