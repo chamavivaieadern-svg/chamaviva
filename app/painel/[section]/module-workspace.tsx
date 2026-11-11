@@ -51,7 +51,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  return <main className="module-page"><ModuleNav/><div className="workspace-head"><div className="workspace-icon-large"><Icon size={24}/></div><div><span className="auth-kicker">CHAMA VIVA • MÓDULO</span><h1>{config.title}</h1><p>{config.description}</p></div><button className="module-refresh" onClick={load}><RefreshCw size={15}/> Atualizar</button></div>
  {section==="igrejas"?<ChurchesManager/>:section!=="relatorios"&&section!=="configuracoes"&&section!=="permissoes"&&section!=="gestao-viagens"&&<ModuleActions section={section} onCreated={load}/>}
  {section==="programacao"&&<ProgramBuilder/>}
- {section==="viagens"&&<VehicleManager/>}
+ {section==="viagens"&&role!=="trip_manager"&&<VehicleManager/>}
  {section==="viagens"&&<TripPassengers/>}
  {section==="relatorios"&&<TravelReports/>}
  {section==="configuracoes"&&<AccountSettings/>}
