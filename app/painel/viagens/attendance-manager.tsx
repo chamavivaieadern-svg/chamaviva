@@ -20,7 +20,6 @@ export default function AttendanceManager(){
  const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const db=createClient();
  const trip=trips.find(t=>t.id===tripId),group=groups.find(g=>g.id===groupId);
- const canAdmin=role==="admin"||role==="pastor"||canManageRollCalls;
  
  const counts=useMemo(()=>({present:entries.filter(e=>e.status==="present").length,absent:entries.filter(e=>e.status==="absent").length,pending:entries.filter(e=>e.status==="pending").length}),[entries]);
 
@@ -60,7 +59,6 @@ export default function AttendanceManager(){
   setSession(data as Session);
   const {data:rows,error:entriesError}=await db.from("roll_call_entries").select("id,passenger_id,status").eq("session_id",data.id).order("created_at");
   if(entriesError){setError(entriesError.message);return;}
-  const ids=(rows||[]).map(x=>x.passenger_id);
   const names=new Map(passengers.map(p=>[p.id,p]));
   setEntries((rows||[]).map(x=>({...x,passenger:names.get(x.passenger_id)})));
  }
