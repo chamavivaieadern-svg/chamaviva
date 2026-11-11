@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
 import {createClient} from "@/lib/supabase/client";
-import {ClipboardCheck,Users,CheckCircle2,AlertCircle,Plus,RefreshCw,ClipboardList} from "lucide-react";
+import {ClipboardCheck,Users,AlertCircle,Plus,RefreshCw,ClipboardList} from "lucide-react";
 
 type Trip={id:string;title:string;church_id:string};
 type Group={id:string;name:string;trip_id:string;church_id:string;leader_id:string};
@@ -9,7 +9,6 @@ type Passenger={id:string;full_name:string};
 type Session={id:string;trip_id:string;group_id:string|null;phase:"departure"|"return"|"group";title:string};
 type Entry={id:string;passenger_id:string;status:"pending"|"present"|"absent";passenger?:Passenger};
 type Checklist={id:string;label:string;is_done:boolean;sort_order:number};
-type DepartureEntry={passenger_id:string;status:string};
 
 export default function AttendanceManager(){
  const [trips,setTrips]=useState<Trip[]>([]),[groups,setGroups]=useState<Group[]>([]),[passengers,setPassengers]=useState<Passenger[]>([]);
@@ -17,7 +16,7 @@ export default function AttendanceManager(){
  const [session,setSession]=useState<Session|null>(null),[entries,setEntries]=useState<Entry[]>([]),[checklist,setChecklist]=useState<Checklist[]>([]);
  const [presentForGroups,setPresentForGroups]=useState<Passenger[]>([]),[groupMembers,setGroupMembers]=useState<string[]>([]),[assignId,setAssignId]=useState("");
  const [templates,setTemplates]=useState<{id:string;label:string;active:boolean}[]>([]),[newTemplate,setNewTemplate]=useState("");
- const [userId,setUserId]=useState(""),[role,setRole]=useState(""),[canManageRollCalls,setCanManageRollCalls]=useState(false),[canManageChecklists,setCanManageChecklists]=useState(false);
+ const [userId,setUserId]=useState(""),[role,setRole]=useState("");
  const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const db=createClient();
  const trip=trips.find(t=>t.id===tripId),group=groups.find(g=>g.id===groupId);
@@ -28,7 +27,7 @@ export default function AttendanceManager(){
  async function loadBase(){
   setLoading(true);setError("");
   const {data:{user}}=await db.auth.getUser();setUserId(user?.id||"");
-  if(user){const {data:p}=await db.from("profiles").select("role,can_manage_roll_calls,can_manage_checklists").eq("id",user.id).maybeSingle();setRole(p?.role||"");if(p?.role==="leader")setPhase("group");setCanManageRollCalls(Boolean(p?.can_manage_roll_calls));setCanManageChecklists(Boolean(p?.can_manage_checklists));}
+  if(user){const {data:p}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();setRole(p?.role||"");if(p?.role==="leader")setPhase("group");}
   const [t,g,p,templatesResult]=await Promise.all([
    db.from("trips").select("id,title,church_id").order("created_at",{ascending:false}).limit(100),
    db.from("evangelism_groups").select("id,name,trip_id,church_id,leader_id").order("created_at",{ascending:false}).limit(200),
@@ -97,14 +96,19 @@ export default function AttendanceManager(){
     if(!eligible.length)throw new Error("Adicione primeiro os passageiros presentes na saída a este grupo.");
    }
    if(!eligible.length)throw new Error("Não há passageiros elegíveis para esta chamada.");
-   let {data:s,error:sError}=await db.from("roll_call_sessions").insert({trip_id:tripId,group_id:phase==="group"?groupId:null,phase,title:phase==="departure"?"Chamada principal — saída":phase==="return"?"Chamada de retorno":"Chamada do grupo — "+(group?.name||"") ,created_by:userId}).select("id,trip_id,group_id,phase,title").single();
-   if(sError&&sError.code==="23505"){
-    let existingQuery=db.from("roll_call_sessions").select("id,trip_id,group_id,phase,title").eq("trip_id",tripId).eq("phase",phase);existingQuery=phase==="group"?existingQuery.eq("group_id",groupId):existingQuery.is("group_id",null);const existing=await existingQuery.maybeSingle();s=existing.data as any;sError=existing.error;
-   }
-   if(sError)throw sError;if(!s)throw new Error("Não foi possível abrir a chamada.");
-   const {error:insertError}=await db.from("roll_call_entries").upsert(eligible.map(p=>({session_id:s!.id,passenger_id:p.id,status:"pending"})),{onConflict:"session_id,passenger_id",ignoreDuplicates:true});
+   const {data:created,error:createError}=await db.from("roll_call_sessions").insert({trip_id:tripId,group_id:phase==="group"?groupId:null,phase,title:phase==="departure"?"Chamada principal — saída":phase==="return"?"Chamada de retorno":"Chamada do grupo — "+(group?.name||""),created_by:userId}).select("id,trip_id,group_id,phase,title").single();
+   let sessionData:Session|null=created as Session|null;
+   if(createError?.code==="23505"){
+    let existingQuery=db.from("roll_call_sessions").select("id,trip_id,group_id,phase,title").eq("trip_id",tripId).eq("phase",phase);
+    existingQuery=phase==="group"?existingQuery.eq("group_id",groupId):existingQuery.is("group_id",null);
+    const existing=await existingQuery.maybeSingle();
+    if(existing.error)throw existing.error;
+    sessionData=existing.data as Session|null;
+   }else if(createError)throw createError;
+   if(!sessionData)throw new Error("Não foi possível abrir a chamada.");
+   const {error:insertError}=await db.from("roll_call_entries").upsert(eligible.map(p=>({session_id:sessionData!.id,passenger_id:p.id,status:"pending"})),{onConflict:"session_id,passenger_id",ignoreDuplicates:true});
    if(insertError)throw insertError;
-   setSession(s as Session);await loadSession();setNotice("Chamada iniciada. Marque cada pessoa como presente ou ausente.");
+   setSession(sessionData);await loadSession();setNotice("Chamada iniciada. Marque cada pessoa como presente ou ausente.");
   }catch(e){setError(e instanceof Error?e.message:"Não foi possível iniciar a chamada.");}
   finally{setBusy(false);}
  }
