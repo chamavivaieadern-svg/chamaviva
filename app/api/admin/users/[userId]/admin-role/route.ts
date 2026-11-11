@@ -14,11 +14,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
     if (actor?.role !== "admin" || actor.status !== "active") {
       return NextResponse.json({ error: "Somente um ADM ativo pode alterar administradores." }, { status: 403 });
     }
-    const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (assuranceError || assurance?.currentLevel !== "aal2") {
-      return NextResponse.json({ error: "Confirme seu segundo fator de autenticação antes de continuar." }, { status: 403 });
-    }
-
     const { userId } = await params;
     if (userId === user.id) return NextResponse.json({ error: "Você não pode alterar o seu próprio nível de administrador." }, { status: 400 });
     const body = await request.json() as { is_admin?: boolean };
