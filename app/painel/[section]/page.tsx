@@ -28,7 +28,7 @@ export default async function SectionPage({ params }: { params: Promise<{ sectio
 
   const { data: profile } = await db
     .from("profiles")
-    .select("role,status,can_manage_trips,can_manage_participants,can_manage_program,can_manage_locations,can_send_messages,can_receive_messages")
+    .select("role,status,can_manage_trips,can_manage_participants,can_manage_program,can_manage_locations,can_send_messages,can_receive_messages,can_manage_roll_calls,can_manage_checklists")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -37,7 +37,7 @@ export default async function SectionPage({ params }: { params: Promise<{ sectio
   if (!profile || profile.status !== "active" || profile.role === "pending") redirect("/aguardando");
   if (!permissions[section].includes(profile.role)) redirect("/painel");
   if (profile.role === "trip_manager") {
-    const allowed = section === "viagens" ? profile.can_manage_trips || profile.can_manage_participants
+    const allowed = section === "viagens" ? profile.can_manage_trips || profile.can_manage_participants || profile.can_manage_roll_calls || profile.can_manage_checklists
       : section === "programacao" ? profile.can_manage_program
       : section === "mapa" ? profile.can_manage_locations
       : section === "mensagens" ? profile.can_send_messages || profile.can_receive_messages
