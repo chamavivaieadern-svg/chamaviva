@@ -23,6 +23,7 @@ const navItems: NavItem[] = [
   { label: "Cultos e programação", icon: CalendarDays, group: "EVENTOS" },
   { label: "Músicas e repertório", icon: Music2, group: "EVENTOS" },
   { label: "Viagens e ônibus", icon: BusFront, group: "LOGÍSTICA" },
+  { label: "Viagens e evangelismo", icon: Compass, group: "LOGÍSTICA" },
   { label: "Mapa ao vivo", icon: MapPinned, group: "LOGÍSTICA" },
   { label: "Evangelismo", icon: Compass, group: "LOGÍSTICA" },
   { label: "Mensagens e avisos", icon: MessageSquare, group: "COMUNICAÇÃO" },
@@ -37,9 +38,9 @@ export default function Home() {
   const [profileName,setProfileName] = useState("Usuário");
   const [churchName,setChurchName] = useState("Minha igreja");
   const roleLabels:Record<string,string>={admin:"Administrador geral",pastor:"Pastor",leader:"Líder de grupo",driver:"Motorista",director:"Dirigente",preacher:"Pregador",musician:"Músico",trip_manager:"Gestor de viagens"};
-  const rolePages:Record<string,string[]>={admin:navItems.map(x=>x.label),pastor:["Visão geral","Igrejas e regiões","Cultos e programação","Músicas e repertório","Viagens e ônibus","Mapa ao vivo","Evangelismo","Mensagens e avisos","Relatórios","Configurações"],leader:["Visão geral","Viagens e ônibus","Mapa ao vivo","Evangelismo","Mensagens e avisos","Configurações"],driver:["Visão geral","Viagens e ônibus","Mapa ao vivo","Mensagens e avisos","Configurações"],director:["Visão geral","Cultos e programação","Músicas e repertório","Mensagens e avisos","Configurações"],preacher:["Visão geral","Cultos e programação","Mensagens e avisos","Configurações"],musician:["Visão geral","Cultos e programação","Músicas e repertório","Mensagens e avisos","Configurações"],trip_manager:["Visão geral","Gestão de viagens"]};
+  const rolePages:Record<string,string[]>={admin:navItems.map(x=>x.label),pastor:["Visão geral","Igrejas e regiões","Cultos e programação","Músicas e repertório","Viagens e ônibus","Mapa ao vivo","Evangelismo","Mensagens e avisos","Relatórios","Configurações"],leader:["Visão geral","Viagens e evangelismo","Mapa ao vivo","Mensagens e avisos","Configurações"],driver:["Visão geral","Viagens e ônibus","Mapa ao vivo","Mensagens e avisos","Configurações"],director:["Visão geral","Cultos e programação","Músicas e repertório","Mensagens e avisos","Configurações"],preacher:["Visão geral","Cultos e programação","Mensagens e avisos","Configurações"],musician:["Visão geral","Cultos e programação","Músicas e repertório","Mensagens e avisos","Configurações"],trip_manager:["Visão geral","Gestão de viagens"]};
   const [active, setActive] = useState("Visão geral");
-  const navigate = (label:string) => { const paths:Record<string,string>={"Visão geral":"/painel","Igrejas e regiões":"/painel/igrejas","Usuários e equipes":"/painel/usuarios","Permissões de acesso":"/painel/permissoes","Gestão de viagens":"/painel/gestao-viagens","Cultos e programação":"/painel/programacao","Músicas e repertório":"/painel/musicas","Viagens e ônibus":"/painel/viagens","Mapa ao vivo":"/painel/mapa","Evangelismo":"/painel/evangelismo","Mensagens e avisos":"/painel/mensagens","Relatórios":"/painel/relatorios","Documentos e logos":"/painel/documentos","Configurações":"/painel/configuracoes"}; setActive(label); setMobileOpen(false); router.push(paths[label]||"/painel"); };
+  const navigate = (label:string) => { const paths:Record<string,string>={"Visão geral":"/painel","Igrejas e regiões":"/painel/igrejas","Usuários e equipes":"/painel/usuarios","Permissões de acesso":"/painel/permissoes","Gestão de viagens":"/painel/gestao-viagens","Cultos e programação":"/painel/programacao","Músicas e repertório":"/painel/musicas","Viagens e ônibus":"/painel/viagens","Viagens e evangelismo":"/painel/atividades","Mapa ao vivo":"/painel/mapa","Evangelismo":"/painel/evangelismo","Mensagens e avisos":"/painel/mensagens","Relatórios":"/painel/relatorios","Documentos e logos":"/painel/documentos","Configurações":"/painel/configuracoes"}; setActive(label); setMobileOpen(false); router.push(paths[label]||"/painel"); };
   const logout = async () => { const db=createClient(); await db.auth.signOut(); router.replace("/login"); router.refresh(); };
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -88,9 +89,8 @@ export default function Home() {
       {label:"Abrir relatórios",icon:ChartNoAxesCombined,page:"Relatórios"},
     ],
     leader:[
-      {label:"Acompanhar viagem",icon:Route,page:"Viagens e ônibus"},
+      {label:"Iniciar viagem ou evangelismo",icon:Compass,page:"Viagens e evangelismo"},
       {label:"Ver localização",icon:MapPinned,page:"Mapa ao vivo"},
-      {label:"Abrir evangelismo",icon:Compass,page:"Evangelismo"},
       {label:"Enviar mensagem",icon:MessageSquare,page:"Mensagens e avisos"},
     ],
     driver:[
