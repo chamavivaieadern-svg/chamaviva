@@ -38,3 +38,8 @@ where cardinality(t.destination_church_ids) = 0
       and length(trim(c.city)) > 2
       and position(lower(trim(c.city)) in lower(coalesce(t.destination, ''))) > 0
   );
+
+update public.churches
+set plus_code = trim(address)
+where plus_code is null
+  and address ~* '[23456789CFGHJMPQRVWX]{4}\+[23456789CFGHJMPQRVWX]{2}';
