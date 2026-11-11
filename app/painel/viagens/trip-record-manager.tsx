@@ -12,7 +12,6 @@ type Trip = {
   status: string;
   departure_at: string | null;
   church_id: string;
-  church?: { name: string } | null;
 };
 
 const statusOptions = [
@@ -59,10 +58,10 @@ export default function TripRecordManager() {
         (profile?.role === "trip_manager" && profile?.status === "active" && profile?.can_manage_trips === true));
 
       const { data, error: queryError } = await db.from("trips")
-        .select("id,title,origin,destination,status,departure_at,church_id,churches(name)")
+        .select("id,title,origin,destination,status,departure_at,church_id")
         .order("created_at", { ascending: false });
       if (queryError) throw queryError;
-      setTrips((data || []).map((item: any) => ({ ...item, church: Array.isArray(item.churches) ? item.churches[0] : item.churches })));
+      setTrips((data || []) as Trip[]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Não foi possível carregar as viagens.");
     } finally {
