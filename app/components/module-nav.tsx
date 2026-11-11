@@ -3,17 +3,19 @@ import Link from "next/link";
 import {useEffect,useState} from "react";
 import {usePathname,useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {Flame,LayoutDashboard,Church,Users,CalendarDays,Music2,BusFront,MapPinned,Compass,MessageSquare,ChartNoAxesCombined,FileText,Settings,LogOut} from "lucide-react";
+import {Flame,LayoutDashboard,Church,Users,CalendarDays,Music2,BusFront,MapPinned,Compass,MessageSquare,ShieldCheck,ChartNoAxesCombined,FileText,Settings,LogOut} from "lucide-react";
 const items=[
  {label:"Painel",href:"/painel",roles:["admin","pastor","leader","driver","director","preacher","musician"],icon:LayoutDashboard},
  {label:"Igrejas",href:"/painel/igrejas",roles:["admin","pastor"],icon:Church},
  {label:"Usuários",href:"/painel/usuarios",roles:["admin"],icon:Users},
- {label:"Programação",href:"/painel/programacao",roles:["admin","pastor","director","preacher","musician"],icon:CalendarDays},
+ {label:"Permissões",href:"/painel/permissoes",roles:["admin"],icon:ShieldCheck},
+ {label:"Minha gestão",href:"/painel/gestao-viagens",roles:["trip_manager"],icon:BusFront},
+ {label:"Programação",href:"/painel/programacao",roles:["admin","pastor","director","preacher","musician","trip_manager"],icon:CalendarDays},
  {label:"Músicas",href:"/painel/musicas",roles:["admin","pastor","director","musician"],icon:Music2},
- {label:"Viagens",href:"/painel/viagens",roles:["admin","pastor","driver","leader"],icon:BusFront},
- {label:"Mapa",href:"/painel/mapa",roles:["admin","pastor","driver","leader"],icon:MapPinned},
+ {label:"Viagens",href:"/painel/viagens",roles:["admin","pastor","driver","leader","trip_manager"],icon:BusFront},
+ {label:"Mapa",href:"/painel/mapa",roles:["admin","pastor","driver","leader","trip_manager"],icon:MapPinned},
  {label:"Evangelismo",href:"/painel/evangelismo",roles:["admin","pastor","leader"],icon:Compass},
- {label:"Mensagens",href:"/painel/mensagens",roles:["admin","pastor","leader","driver","director","preacher","musician"],icon:MessageSquare},
+ {label:"Mensagens",href:"/painel/mensagens",roles:["admin","pastor","leader","driver","director","preacher","musician","trip_manager"],icon:MessageSquare},
  {label:"Relatórios",href:"/painel/relatorios",roles:["admin","pastor"],icon:ChartNoAxesCombined},
  {label:"Documentos",href:"/painel/documentos",roles:["admin"],icon:FileText},
  {label:"Configurações",href:"/painel/configuracoes",roles:["admin","pastor","leader","driver","director","preacher","musician"],icon:Settings}
