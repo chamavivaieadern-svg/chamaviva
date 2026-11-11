@@ -79,6 +79,22 @@ export default function ProgramBuilder(){
     if(detail){pdf.text(pdf.splitTextToSize(detail,contentWidth-25),left+21,detailY);detailY+=5;}
     if(noteLines.length){pdf.setTextColor(85,75,65);pdf.text(noteLines,left+21,detailY);}
     y+=cardHeight+3;
+    if(item.lyrics&&item.item_type==="worship"){
+     const lyricLines=pdf.splitTextToSize(item.lyrics,contentWidth-12);
+     const lyricHeader="LETRA — "+item.title;
+     const headerLines=pdf.splitTextToSize(lyricHeader,contentWidth-12);
+     const blockHeight=headerLines.length*4.5+5;
+     if(y+blockHeight>pageHeight-20){pdf.addPage();y=18;}
+     pdf.setFillColor(250,248,244);pdf.roundedRect(left+5,y,contentWidth-10,blockHeight,1.5,1.5,"F");
+     pdf.setFont("helvetica","bold");pdf.setFontSize(8.5);pdf.setTextColor(115,65,30);
+     pdf.text(headerLines,left+8,y+4.5);y+=blockHeight+2;
+     pdf.setFont("helvetica","normal");pdf.setFontSize(8.5);pdf.setTextColor(55,50,45);
+     for(const line of lyricLines){
+      if(y>pageHeight-19){pdf.addPage();y=18;}
+      pdf.text(line,left+8,y);y+=4.2;
+     }
+     y+=4;
+    }
    }
    const pageCount=pdf.getNumberOfPages();
    for(let page=1;page<=pageCount;page++){pdf.setPage(page);pdf.setDrawColor(225,218,208);pdf.setLineWidth(0.3);pdf.line(left,pageHeight-14,pageWidth-right,pageHeight-14);pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(125,115,105);pdf.text("CHAMA VIVA • Programação para uso da equipe do púlpito",left,pageHeight-9);pdf.text("Página "+page+" de "+pageCount,pageWidth-right,pageHeight-9,{align:"right"});}
