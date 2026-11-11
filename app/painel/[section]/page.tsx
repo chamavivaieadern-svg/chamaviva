@@ -14,7 +14,7 @@ const permissions: Record<string, string[]> = {
   mapa: ["admin", "pastor", "leader", "driver", "trip_manager"],
   relatorios: ["admin", "pastor"],
   configuracoes: ["admin", "pastor", "leader", "driver", "director", "preacher", "musician", "trip_manager"],
-  permissoes: ["admin"],
+  permissoes: ["admin"],\n  automacoes: ["admin"],
   "gestao-viagens": ["admin", "trip_manager"],
 };
 
