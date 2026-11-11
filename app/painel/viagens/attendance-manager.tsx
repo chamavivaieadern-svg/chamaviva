@@ -22,7 +22,7 @@ export default function AttendanceManager(){
  const db=createClient();
  const trip=trips.find(t=>t.id===tripId),group=groups.find(g=>g.id===groupId);
  const canAdmin=role==="admin"||role==="pastor"||canManageRollCalls;
- const canManageGroup=canAdmin||Boolean(group&&group.leader_id===userId)||canManageChecklists;
+ 
  const counts=useMemo(()=>({present:entries.filter(e=>e.status==="present").length,absent:entries.filter(e=>e.status==="absent").length,pending:entries.filter(e=>e.status==="pending").length}),[entries]);
 
  async function loadBase(){
@@ -99,7 +99,7 @@ export default function AttendanceManager(){
    if(!eligible.length)throw new Error("Não há passageiros elegíveis para esta chamada.");
    let {data:s,error:sError}=await db.from("roll_call_sessions").insert({trip_id:tripId,group_id:phase==="group"?groupId:null,phase,title:phase==="departure"?"Chamada principal — saída":phase==="return"?"Chamada de retorno":"Chamada do grupo — "+(group?.name||"") ,created_by:userId}).select("id,trip_id,group_id,phase,title").single();
    if(sError&&sError.code==="23505"){
-    const existing=await db.from("roll_call_sessions").select("id,trip_id,group_id,phase,title").eq("trip_id",tripId).eq("phase",phase).match(phase==="group"?{group_id:groupId}:{}).maybeSingle();s=existing.data as any;sError=existing.error;
+    let existingQuery=db.from("roll_call_sessions").select("id,trip_id,group_id,phase,title").eq("trip_id",tripId).eq("phase",phase);existingQuery=phase==="group"?existingQuery.eq("group_id",groupId):existingQuery.is("group_id",null);const existing=await existingQuery.maybeSingle();s=existing.data as any;sError=existing.error;
    }
    if(sError)throw sError;if(!s)throw new Error("Não foi possível abrir a chamada.");
    const {error:insertError}=await db.from("roll_call_entries").upsert(eligible.map(p=>({session_id:s!.id,passenger_id:p.id,status:"pending"})),{onConflict:"session_id,passenger_id",ignoreDuplicates:true});
@@ -147,7 +147,7 @@ export default function AttendanceManager(){
    <small>Somente passageiros marcados como presentes na chamada de saída podem ser vinculados.</small>
    <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}><select value={assignId} onChange={e=>setAssignId(e.target.value)} style={{flex:1,minWidth:180}}><option value="">Escolha um passageiro presente</option>{eligibleForGroup.map(p=><option key={p.id} value={p.id}>{p.full_name}</option>)}</select><button type="button" className="module-primary" disabled={!assignId||busy} onClick={assignPassenger}><Plus size={14}/> Adicionar</button></div>
    <p style={{fontSize:12,marginTop:8}}>Participantes vinculados: {groupMembers.length}</p>
-   {checklist.length>0&&<div style={{marginTop:14}}><b style={{display:"flex",gap:7,alignItems:"center"}}><ClipboardList size={16}/> Checklist de preparação</b>{checklist.map(item=><label key={item.id} style={{display:"flex",gap:9,alignItems:"center",padding:"9px 0",borderBottom:"1px solid #f1e9e3"}}><input type="checkbox" checked={item.is_done} onChange={()=>toggleChecklist(item)}/><span style={{textDecoration:item.is_done?"line-through":"none",opacity:item.is_done?.6:1}}>{item.label}</span></label>)}</div>}
+   {checklist.length>0&&<div style={{marginTop:14}}><b style={{display:"flex",gap:7,alignItems:"center"}}><ClipboardList size={16}/> Checklist de preparação</b>{checklist.map(item=><label key={item.id} style={{display:"flex",gap:9,alignItems:"center",padding:"9px 0",borderBottom:"1px solid #f1e9e3"}}><input type="checkbox" checked={item.is_done} onChange={()=>toggleChecklist(item)}/><span style={{textDecoration:item.is_done?"line-through":"none",opacity:item.is_done ? 0.6 : 1}}>{item.label}</span></label>)}</div>}
   </div>}
   {tripId&&phase!=="group"&&<div style={{display:"flex",gap:8,alignItems:"center",marginTop:12,flexWrap:"wrap"}}><button type="button" className="module-primary" disabled={busy} onClick={startSession}><ClipboardCheck size={15}/> {session?"Atualizar lista da chamada":"Iniciar chamada"}</button>{session&&<span style={{fontSize:12,color:"#76685e"}}>{session.title}</span>}</div>}
   {tripId&&phase==="group"&&groupId&&<div style={{display:"flex",gap:8,alignItems:"center",marginTop:12,flexWrap:"wrap"}}><button type="button" className="module-primary" disabled={busy} onClick={startSession}><ClipboardCheck size={15}/> {session?"Atualizar lista da chamada":"Iniciar chamada do grupo"}</button>{session&&<span style={{fontSize:12,color:"#76685e"}}>{session.title}</span>}</div>}
