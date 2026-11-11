@@ -1,0 +1,1 @@
+revoke all on function private.capture_trip_report_snapshot(uuid,uuid,text) from public, anon, authenticated;
