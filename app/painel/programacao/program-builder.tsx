@@ -11,7 +11,9 @@ async function imageData(url:string):Promise<string>{const response=await fetch(
 export default function ProgramBuilder(){
  const [events,setEvents]=useState<EventRow[]>([]),[eventId,setEventId]=useState(""),[items,setItems]=useState<Item[]>([]);
  const [role,setRole]=useState("");const [canManageProgram,setCanManageProgram]=useState(false);
- const [form,setForm]=useState({title:"",participant_name:"",item_type:"other",time:"",duration_minutes:"",notes:""});\n const [editingId,setEditingId]=useState<string|null>(null);\n const [editForm,setEditForm]=useState({title:"",participant_name:"",item_type:"other",time:"",duration_minutes:"",notes:""});
+ const [form,setForm]=useState({title:"",participant_name:"",item_type:"other",time:"",duration_minutes:"",notes:""});
+ const [editingId,setEditingId]=useState<string|null>(null);
+ const [editForm,setEditForm]=useState({title:"",participant_name:"",item_type:"other",time:"",duration_minutes:"",notes:""});
  const [busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState("");
  async function loadEvents(){const db=createClient();const {data:{user}}=await db.auth.getUser();if(!user)return;
   const {data:p}=await db.from("profiles").select("role,can_manage_program").eq("id",user.id).single();setRole(p?.role||"");setCanManageProgram(Boolean(p?.can_manage_program));
