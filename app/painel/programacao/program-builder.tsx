@@ -36,7 +36,7 @@ export default function ProgramBuilder(){
  async function publish(){if(!eventId||!(["admin","director"].includes(role)||(role==="trip_manager"&&canManageProgram)))return;if(!confirm("Publicar esta programação para os usuários autorizados da igreja?"))return;setBusy(true);setError("");const db=createClient();const {error}=await db.from("events").update({status:"published"}).eq("id",eventId);if(error)setError(error.message);else{setMessage("Programação publicada e notificações enviadas.");await loadEvents();}setBusy(false);}
  async function downloadPdf(){
   if(!["admin","director"].includes(role)){setError("Somente ADM e dirigente podem baixar o PDF.");return;}
-  if(!eventId)return;setBusy(true);setError("");
+  if(!eventId)return;setBusy(true);setError("");setMessage("");
   try{
    const response=await fetch("/api/programacao/"+eventId+"/export");
    const payload=await response.json();
@@ -44,22 +44,62 @@ export default function ProgramBuilder(){
    const event=payload.event as EventRow;
    const pdfItems=payload.items as Item[];
    const logos=payload.logos as {label:string;storage_path:string;is_official:boolean;url:string}[];
-   const pdf=new jsPDF({unit:"mm",format:"a4"});let y=15;let logoX=14;
-   for(const asset of logos){try{const data=await imageData(asset.url);pdf.addImage(data,data.startsWith("data:image/jpeg")?"JPEG":"PNG",logoX,y,25,18,"","FAST");logoX+=29;}catch{/* logo opcional */}}
-   pdf.setTextColor(185,75,22);pdf.setFont("helvetica","bold");pdf.setFontSize(18);pdf.text("CHAMA VIVA",pdf.internal.pageSize.getWidth()-14,22,{align:"right"});
-   y=43;pdf.setTextColor(40,30,24);pdf.setFontSize(16);pdf.text(event.title,14,y);y+=8;
-   pdf.setFont("helvetica","normal");pdf.setFontSize(10);pdf.text("Data: "+new Date(event.starts_at).toLocaleString("pt-BR"),14,y);y+=6;if(event.venue){pdf.text("Local: "+event.venue,14,y);y+=6;}
-   y+=5;pdf.setFont("helvetica","bold");pdf.setFontSize(11);pdf.text("ORDEM DA PROGRAMAÇÃO",14,y);y+=7;
-   for(let i=0;i<pdfItems.length;i++){const item=pdfItems[i];if(y>265){pdf.addPage();y=18;}
-    pdf.setFont("helvetica","bold");pdf.setFontSize(10);const time=item.starts_at?new Date(item.starts_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"—";
-    pdf.text((i+1)+". "+time+"  "+item.title,14,y);y+=5;
-    pdf.setFont("helvetica","normal");pdf.setFontSize(9);const detail=[item.participant_name,item.duration_minutes?item.duration_minutes+" min":null,item.item_type].filter(Boolean).join(" • ");if(detail){pdf.text(detail,19,y);y+=5;}
-    if(item.notes){const lines=pdf.splitTextToSize(item.notes,175);pdf.text(lines,19,y);y+=lines.length*4.5;}
-    if(item.lyrics){const lyricsLines=pdf.splitTextToSize("LETRA: "+item.lyrics,175);for(const line of lyricsLines){if(y>275){pdf.addPage();y=18;}pdf.text(line,19,y);y+=4.2;}}
-    y+=3;
+   const pdf=new jsPDF({unit:"mm",format:"a4"});
+   const pageWidth=pdf.internal.pageSize.getWidth(),pageHeight=pdf.internal.pageSize.getHeight();
+   const left=16,right=16,contentWidth=pageWidth-left-right;
+   const date=new Date(event.starts_at);
+   const dateLabel=date.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+   const timeLabel=date.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+   const kindLabels:Record<string,string>={opening:"Abertura",worship:"Louvor",greeting:"Saudação",preaching:"Mensagem / pregação",prayer:"Oração",other:"Participação"};
+   let y=16,logoX=left;
+   for(const asset of logos.slice(0,2)){try{const data=await imageData(asset.url);pdf.addImage(data,data.startsWith("data:image/jpeg")?"JPEG":"PNG",logoX,13,22,17,"","FAST");logoX+=25;}catch{/* logo opcional */}}
+   pdf.setTextColor(165,65,20);pdf.setFont("helvetica","bold");pdf.setFontSize(17);pdf.text("CHAMA VIVA",pageWidth-right,20,{align:"right"});
+   pdf.setTextColor(75,65,55);pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.text("PROGRAMAÇÃO OFICIAL",pageWidth-right,25,{align:"right"});
+   y=37;pdf.setDrawColor(220,125,45);pdf.setLineWidth(0.8);pdf.line(left,y,pageWidth-right,y);y+=10;
+   pdf.setTextColor(35,30,25);pdf.setFont("helvetica","bold");pdf.setFontSize(18);
+   const titleLines=pdf.splitTextToSize(event.title.toLocaleUpperCase("pt-BR"),contentWidth);pdf.text(titleLines,left,y);y+=titleLines.length*7+3;
+   pdf.setFont("helvetica","normal");pdf.setFontSize(10);pdf.setTextColor(75,70,65);pdf.text(dateLabel+" • "+timeLabel,left,y);y+=6;
+   if(event.venue){const venueLines=pdf.splitTextToSize("LOCAL: "+event.venue,contentWidth);pdf.text(venueLines,left,y);y+=venueLines.length*5+2;}
+   y+=3;pdf.setFillColor(248,244,238);pdf.roundedRect(left,y,contentWidth,10,2,2,"F");
+   pdf.setFont("helvetica","bold");pdf.setFontSize(10);pdf.setTextColor(105,55,25);pdf.text("ORDEM DO CULTO / CRUZADA",left+4,y+6.5);y+=17;
+   if(!pdfItems.length){pdf.setFont("helvetica","normal");pdf.setFontSize(10);pdf.setTextColor(90,85,80);pdf.text("A programação ainda não possui participações cadastradas.",left,y);}
+   for(let i=0;i<pdfItems.length;i++){
+    const item=pdfItems[i],time=item.starts_at?new Date(item.starts_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"A definir";
+    const detail=[kindLabels[item.item_type]||"Participação",item.participant_name||"Responsável a definir",item.duration_minutes?item.duration_minutes+" min":null].filter(Boolean).join("  •  ");
+    const noteLines=item.notes?pdf.splitTextToSize("Orientação: "+item.notes,contentWidth-22):[];
+    const itemTitle=pdf.splitTextToSize(item.title,contentWidth-48);
+    const cardHeight=Math.max(14,itemTitle.length*4.5+5)+(detail?5:0)+(noteLines.length?noteLines.length*4.2+2:0);
+    if(y+cardHeight>pageHeight-22){pdf.addPage();y=18;}
+    pdf.setDrawColor(225,218,208);pdf.setLineWidth(0.25);pdf.roundedRect(left,y,contentWidth,cardHeight,2,2,"S");
+    pdf.setFillColor(249,239,225);pdf.roundedRect(left+2,y+2,15,10,1.5,1.5,"F");
+    pdf.setFont("helvetica","bold");pdf.setFontSize(9);pdf.setTextColor(145,65,20);pdf.text(String(i+1).padStart(2,"0"),left+9.5,y+8.5,{align:"center"});
+    pdf.setFont("helvetica","bold");pdf.setFontSize(10.5);pdf.setTextColor(35,30,25);pdf.text(itemTitle,left+21,y+6);
+    pdf.setFont("helvetica","normal");pdf.setFontSize(8.5);pdf.setTextColor(90,82,72);pdf.text(time,pageWidth-right-3,y+6,{align:"right"});
+    let detailY=y+Math.max(11,itemTitle.length*4.5+7);
+    if(detail){pdf.text(pdf.splitTextToSize(detail,contentWidth-25),left+21,detailY);detailY+=5;}
+    if(noteLines.length){pdf.setTextColor(85,75,65);pdf.text(noteLines,left+21,detailY);}
+    y+=cardHeight+3;
+    if(item.lyrics&&item.item_type==="worship"){
+     const lyricLines=pdf.splitTextToSize(item.lyrics,contentWidth-12);
+     const lyricHeader="LETRA — "+item.title;
+     const headerLines=pdf.splitTextToSize(lyricHeader,contentWidth-12);
+     const blockHeight=headerLines.length*4.5+5;
+     if(y+blockHeight>pageHeight-20){pdf.addPage();y=18;}
+     pdf.setFillColor(250,248,244);pdf.roundedRect(left+5,y,contentWidth-10,blockHeight,1.5,1.5,"F");
+     pdf.setFont("helvetica","bold");pdf.setFontSize(8.5);pdf.setTextColor(115,65,30);
+     pdf.text(headerLines,left+8,y+4.5);y+=blockHeight+2;
+     pdf.setFont("helvetica","normal");pdf.setFontSize(8.5);pdf.setTextColor(55,50,45);
+     for(const line of lyricLines){
+      if(y>pageHeight-19){pdf.addPage();y=18;}
+      pdf.text(line,left+8,y);y+=4.2;
+     }
+     y+=4;
+    }
    }
-   pdf.setFontSize(8);pdf.setTextColor(120,110,100);pdf.text("Documento gerado pelo CHAMA VIVA",14,286);
-   pdf.save("programacao-chama-viva.pdf");setMessage("PDF gerado.");
+   const pageCount=pdf.getNumberOfPages();
+   for(let page=1;page<=pageCount;page++){pdf.setPage(page);pdf.setDrawColor(225,218,208);pdf.setLineWidth(0.3);pdf.line(left,pageHeight-14,pageWidth-right,pageHeight-14);pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(125,115,105);pdf.text("CHAMA VIVA • Programação para uso da equipe do púlpito",left,pageHeight-9);pdf.text("Página "+page+" de "+pageCount,pageWidth-right,pageHeight-9,{align:"right"});}
+   const safeTitle=event.title.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+   pdf.save("programacao-"+(safeTitle||"culto-cruzada")+".pdf");setMessage("PDF pronto para impressão em A4.");
   }catch(e){setError(e instanceof Error?e.message:"Não foi possível gerar o PDF.");}
   finally{setBusy(false);}
  }
