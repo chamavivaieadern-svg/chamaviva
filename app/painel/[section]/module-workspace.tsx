@@ -14,6 +14,7 @@ import ProgramBuilder from "../programacao/program-builder";
 import TripPassengers from "../viagens/passengers";
 import AttendanceManager from "../viagens/attendance-manager";
 import VehicleManager from "../viagens/vehicle-manager";
+import TripRecordManager from "../viagens/trip-record-manager";
 import TravelReports from "../relatorios/travel-reports";
 import AutomationManager from "../automacoes/automation-manager";
 const LocationMap=dynamic(()=>import("../mapa/location-map"),{ssr:false,loading:()=> <div className="data-empty">Carregando mapa...</div>});
@@ -64,13 +65,14 @@ export default function ModuleWorkspace({section}:{section:string}){
  {section==="gestao-viagens"&&<TripManagerHome/>}
  {section==="atividades"&&<><LocationControls/><AttendanceManager/></>}
  {section==="viagens"&&<AttendanceManager/>}
+ {section==="viagens"&&<TripRecordManager/>}
  {section==="mapa"&&canManageLocations&&<RoutePlanner/>}
  {section==="mapa"&&role!=="trip_manager"&&role!=="leader"&&<LocationControls/>}
  {(section==="mapa"||section==="evangelismo")&&<LocationMap/>}
  {section==="mapa"&&<div className="map-info-card"><MapPin size={19}/><div><b>Localização compartilhada com consentimento</b><p>As posições são registradas somente durante viagens ou evangelismos ativos. A tabela abaixo mostra o horário real da última atualização; não representa rastreamento em tempo real enquanto não houver um dispositivo enviando GPS.</p></div></div>}
  {section==="musicas"&&["admin","director"].includes(role)&&<div className="map-info-card"><CheckCircle2 size={18}/><div><b>Aprovação do dirigente</b><p>Somente letras aprovadas podem entrar na programação oficial.</p></div></div>}
  {section!=="igrejas"&&section!=="permissoes"&&section!=="gestao-viagens"&&section!=="atividades"&&section!=="automacoes"&&error&&<p className="module-error"><AlertCircle size={15}/>{error}</p>}
- {section!=="igrejas"&&section!=="configuracoes"&&section!=="permissoes"&&section!=="gestao-viagens"&&section!=="atividades"&&section!=="automacoes"&&<section className="data-panel"><div className="data-panel-head"><b>Registros</b><span>{rows.length} registro(s)</span></div>
+ {section!=="igrejas"&&section!=="configuracoes"&&section!=="permissoes"&&section!=="gestao-viagens"&&section!=="atividades"&&section!=="automacoes"&&section!=="viagens"&&<section className="data-panel"><div className="data-panel-head"><b>Registros</b><span>{rows.length} registro(s)</span></div>
  {loading?<p className="data-empty">Carregando...</p>:rows.length===0?<div className="data-empty">Nenhum registro encontrado. Quando houver dados cadastrados e vinculados ao seu perfil, eles aparecerão aqui.</div>:<div className="data-table-wrap"><table><thead><tr>{config.columns.map(c=><th key={c}>{labels[c]||c}</th>)}{section==="musicas"&&role==="director"&&<th>Aprovação</th>}</tr></thead><tbody>{rows.map((row,i)=><tr key={String(row.id||i)}>{config.columns.map(c=><td key={c}>{c==="status"?<span className={"user-status "+String(row[c])}>{fmt(row[c])}</span>:fmt(row[c])}</td>)}{section==="musicas"&&role==="director"&&<td>{row.status==="pending"?<div className="user-actions"><button onClick={()=>approve(row.id,"approved")} title="Aprovar"><CheckCircle2 size={15}/></button><button className="danger-action" onClick={()=>approve(row.id,"rejected")} title="Rejeitar"><AlertCircle size={15}/></button></div>:fmt(row.status)}</td>}</tr>)}</tbody></table></div>}
  </section>}
  </main>;
