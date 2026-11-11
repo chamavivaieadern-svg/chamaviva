@@ -7,6 +7,7 @@ const permissions: Record<string, string[]> = {
   programacao: ["admin", "pastor", "director", "preacher", "musician", "trip_manager"],
   musicas: ["admin", "pastor", "director", "musician"],
   viagens: ["admin", "pastor", "driver", "leader", "trip_manager"],
+  atividades: ["leader"],
   evangelismo: ["admin", "pastor", "leader"],
   mensagens: ["admin", "pastor", "leader", "driver", "director", "preacher", "musician", "trip_manager"],
   documentos: ["admin"],
@@ -32,6 +33,7 @@ export default async function SectionPage({ params }: { params: Promise<{ sectio
     .maybeSingle();
 
   if (profile?.status === "blocked") redirect("/login?blocked=1");
+  if (profile?.role === "leader" && (section === "viagens" || section === "evangelismo")) redirect("/painel/atividades");
   if (!profile || profile.status !== "active" || profile.role === "pending") redirect("/aguardando");
   if (!permissions[section].includes(profile.role)) redirect("/painel");
   if (profile.role === "trip_manager") {
