@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import {useEffect,useState} from "react";
 import {createClient} from "@/lib/supabase/client";
 import {jsPDF} from "jspdf";
-import {Plus,ArrowUp,ArrowDown,Trash2,FileDown,CheckCircle2} from "lucide-react";
+import {Plus,ArrowUp,ArrowDown,Trash2,FileDown,CheckCircle2,Edit3,Save,X} from "lucide-react";
 
 type EventRow={id:string;title:string;starts_at:string;venue:string|null;status:string};
 type Item={id:string;title:string;participant_name:string|null;item_type:string;starts_at:string|null;duration_minutes:number|null;sort_order:number;notes:string|null;lyrics:string|null};
@@ -11,7 +11,7 @@ async function imageData(url:string):Promise<string>{const response=await fetch(
 export default function ProgramBuilder(){
  const [events,setEvents]=useState<EventRow[]>([]),[eventId,setEventId]=useState(""),[items,setItems]=useState<Item[]>([]);
  const [role,setRole]=useState("");const [canManageProgram,setCanManageProgram]=useState(false);
- const [form,setForm]=useState({title:"",participant_name:"",item_type:"other",time:"",duration_minutes:"",notes:""});
+ const [form,setForm]=useState({title:"",participant_name:"",item_type:"other",time:"",duration_minutes:"",notes:""});\n const [editingId,setEditingId]=useState<string|null>(null);\n const [editForm,setEditForm]=useState({title:"",participant_name:"",item_type:"other",time:"",duration_minutes:"",notes:""});
  const [busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState("");
  async function loadEvents(){const db=createClient();const {data:{user}}=await db.auth.getUser();if(!user)return;
   const {data:p}=await db.from("profiles").select("role,can_manage_program").eq("id",user.id).single();setRole(p?.role||"");setCanManageProgram(Boolean(p?.can_manage_program));
@@ -33,6 +33,21 @@ export default function ProgramBuilder(){
   setItems(next.map((x,i)=>({...x,sort_order:i})));
  }
  async function remove(id:string){if(!confirm("Remover esta participação da programação?"))return;const db=createClient();const {error}=await db.from("program_items").delete().eq("id",id);if(error)setError(error.message);else loadItems(eventId);}
+ function startEdit(item:Item){
+  const date=item.starts_at?new Date(item.starts_at):null;
+  const time=date?String(date.getHours()).padStart(2,"0")+":"+String(date.getMinutes()).padStart(2,"0"):"";
+  setEditingId(item.id);setEditForm({title:item.title,participant_name:item.participant_name||"",item_type:item.item_type,time,duration_minutes:item.duration_minutes?String(item.duration_minutes):"",notes:item.notes||""});setError("");setMessage("");
+ }
+ async function saveEdit(id:string){
+  if(!editForm.title.trim()){setError("Informe o nome da atividade.");return;}
+  setBusy(true);setError("");setMessage("");
+  try{
+   const db=createClient();const event=events.find(x=>x.id===eventId);if(!event)throw new Error("Selecione uma programação.");
+   const date=new Date(event.starts_at);if(editForm.time){const [h,m]=editForm.time.split(":").map(Number);date.setHours(h,m,0,0);}
+   const {error}=await db.from("program_items").update({title:editForm.title.trim(),participant_name:editForm.participant_name.trim()||null,item_type:editForm.item_type,starts_at:editForm.time?date.toISOString():null,duration_minutes:editForm.duration_minutes?Number(editForm.duration_minutes):null,notes:editForm.notes.trim()||null}).eq("id",id);
+   if(error)throw error;setEditingId(null);setMessage("Participação atualizada e salva.");await loadItems(eventId);
+  }catch(e){setError(e instanceof Error?e.message:"Não foi possível salvar as alterações.");}finally{setBusy(false);}
+ }
  async function publish(){if(!eventId||!(["admin","director"].includes(role)||(role==="trip_manager"&&canManageProgram)))return;if(!confirm("Publicar esta programação para os usuários autorizados da igreja?"))return;setBusy(true);setError("");const db=createClient();const {error}=await db.from("events").update({status:"published"}).eq("id",eventId);if(error)setError(error.message);else{setMessage("Programação publicada e notificações enviadas.");await loadEvents();}setBusy(false);}
  async function downloadPdf(){
   if(!["admin","director"].includes(role)){setError("Somente ADM e dirigente podem baixar o PDF.");return;}
@@ -118,7 +133,7 @@ export default function ProgramBuilder(){
    <label className="program-notes">Observações<input value={form.notes} onChange={e=>setForm(v=>({...v,notes:e.target.value}))} placeholder="Orientações para o participante"/></label>
   </div><button className="module-primary" disabled={busy}><Plus size={15}/> Adicionar à ordem</button></form>}
   <div className="program-order"><div className="program-order-head"><b>Ordem oficial</b><small>{items.length} participação(ões)</small></div>
-   {items.length===0?<p className="data-empty">Nenhuma participação cadastrada para este evento.</p>:items.map((item,i)=><div className="program-row" key={item.id}><span className="program-number">{String(i+1).padStart(2,"0")}</span><div className="program-row-main"><b>{item.title}</b><small>{item.participant_name||"Responsável a definir"} • {item.starts_at?new Date(item.starts_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"Horário a definir"}{item.duration_minutes?" • "+item.duration_minutes+" min":""}</small>{item.notes&&<small>{item.notes}</small>}{item.lyrics&&<details className="program-lyrics"><summary>Ver letra aprovada</summary><p>{item.lyrics}</p></details>}</div>{canEdit&&<div className="program-row-actions"><button onClick={()=>move(item,i,-1)} disabled={i===0} title="Subir"><ArrowUp size={14}/></button><button onClick={()=>move(item,i,1)} disabled={i===items.length-1} title="Descer"><ArrowDown size={14}/></button><button className="danger-action" onClick={()=>remove(item.id)} title="Remover"><Trash2 size={14}/></button></div>}</div>)}
+   {items.length===0?<p className="data-empty">Nenhuma participação cadastrada para este evento.</p>:items.map((item,i)=><div className="program-row" key={item.id}><span className="program-number">{String(i+1).padStart(2,"0")}</span><div className="program-row-main">{editingId===item.id?<div className="program-edit-form"><label>Atividade<input value={editForm.title} onChange={e=>setEditForm(v=>({...v,title:e.target.value}))}/></label><label>Responsável<input value={editForm.participant_name} onChange={e=>setEditForm(v=>({...v,participant_name:e.target.value}))}/></label><label>Tipo<select value={editForm.item_type} onChange={e=>setEditForm(v=>({...v,item_type:e.target.value}))}><option value="opening">Abertura</option><option value="worship">Louvor</option><option value="greeting">Saudação</option><option value="preaching">Pregação</option><option value="prayer">Oração</option><option value="other">Outro</option></select></label><label>Horário<input type="time" value={editForm.time} onChange={e=>setEditForm(v=>({...v,time:e.target.value}))}/></label><label>Duração (min)<input type="number" min="1" value={editForm.duration_minutes} onChange={e=>setEditForm(v=>({...v,duration_minutes:e.target.value}))}/></label><label className="program-edit-notes">Observações<input value={editForm.notes} onChange={e=>setEditForm(v=>({...v,notes:e.target.value}))}/></label><div className="program-edit-actions"><button type="button" className="module-primary" disabled={busy} onClick={()=>saveEdit(item.id)}><Save size={13}/> Salvar alterações</button><button type="button" className="module-secondary" disabled={busy} onClick={()=>setEditingId(null)}><X size={13}/> Cancelar</button></div></div>:<><b>{item.title}</b><small>{item.participant_name||"Responsável a definir"} • {item.starts_at?new Date(item.starts_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"Horário a definir"}{item.duration_minutes?" • "+item.duration_minutes+" min":""}</small>{item.notes&&<small>{item.notes}</small>}{item.lyrics&&<details className="program-lyrics"><summary>Ver letra aprovada</summary><p>{item.lyrics}</p></details>}</>}</div>{canEdit&&<div className="program-row-actions">{editingId!==item.id&&<button onClick={()=>startEdit(item)} title="Editar participação"><Edit3 size={14}/></button>}<button onClick={()=>move(item,i,-1)} disabled={i===0||Boolean(editingId)} title="Subir"><ArrowUp size={14}/></button><button onClick={()=>move(item,i,1)} disabled={i===items.length-1||Boolean(editingId)} title="Descer"><ArrowDown size={14}/></button><button className="danger-action" onClick={()=>remove(item.id)} disabled={Boolean(editingId)} title="Remover"><Trash2 size={14}/></button></div>}</div>)}
   </div></>}
   {error&&<p className="module-error">{error}</p>}{message&&<p className="module-success"><CheckCircle2 size={14}/>{message}</p>}
  </section>;
