@@ -85,7 +85,8 @@ export async function POST(request: Request) {
     let point: { latitude: number; longitude: number };
     let fullCode = code;
     if (isFullCode(code)) {
-      point = decodeFullCode(code);
+      const decoded = decodeFullCode(code);
+      point = { latitude: decoded.latitudeCenter, longitude: decoded.longitudeCenter };
     } else {
       if (!locality) return NextResponse.json({ error: "Esse é um Plus Code curto. Acrescente a cidade e o estado, por exemplo: 3PGP+9R2 Parnamirim, RN." }, { status: 400 });
       const query = encodeURIComponent(locality + ", Brazil");
