@@ -15,6 +15,7 @@ const permissions: Record<string, string[]> = {
   relatorios: ["admin", "pastor"],
   configuracoes: ["admin", "pastor", "leader", "driver", "director", "preacher", "musician", "trip_manager"],
   permissoes: ["admin"],
+  automacoes: ["admin"],
   "gestao-viagens": ["admin", "trip_manager"],
 };
 
