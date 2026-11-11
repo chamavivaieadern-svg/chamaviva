@@ -112,6 +112,7 @@ export default function Home() {
       {label:"Enviar letras e repertório",icon:Music2,page:"Músicas e repertório"},
       {label:"Enviar mensagem",icon:MessageSquare,page:"Mensagens e avisos"},
     ],
+    trip_manager:[{label:"Abrir minha gestão",icon:Route,page:"Gestão de viagens"}],
   };
   const quickActions=quickActionsByRole[role]||[];
   const initials=profileName.split(" ").filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
