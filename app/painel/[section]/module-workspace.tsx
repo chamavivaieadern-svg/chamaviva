@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/client";
 import LocationControls from "../mapa/location-controls";
 import ModuleActions from "./module-actions";
 import ChurchesManager from "../igrejas/churches-manager";
+import AccessControlManager from "../permissoes/access-control-manager";
+import TripManagerHome from "../gestao-viagens/trip-manager-home";
+import RoutePlanner from "../mapa/route-planner";
 import ModuleNav from "@/app/components/module-nav";
 import AccountSettings from "../configuracoes/account-settings";
 import ProgramBuilder from "../programacao/program-builder";
@@ -25,13 +28,15 @@ const modules:Record<string,{title:string;description:string;table:string;icon:s
  mapa:{title:"Mapa ao vivo",description:"Últimas posições compartilhadas durante viagens e evangelismos ativos.",table:"live_locations",icon:"map",columns:["trip_id","group_id","latitude","longitude","recorded_at"]},
  relatorios:{title:"Relatórios",description:"Relatórios operacionais das viagens da sua igreja/região.",table:"trips",icon:"file",columns:["title","origin","destination","status","departure_at"]},
  configuracoes:{title:"Configurações",description:"Dados básicos da sua conta no CHAMA VIVA.",table:"profiles",icon:"file",columns:["full_name","role","status","created_at"]},
+ permissoes:{title:"Permissões de acesso",description:"Libere somente as funções necessárias para cada pessoa.",table:"profiles",icon:"file",columns:["full_name","role","status"]},
+ "gestao-viagens":{title:"Gestão de viagens",description:"Área limitada às funções liberadas pelo administrador.",table:"trips",icon:"bus",columns:["title","origin","destination","status"]},
 };
 const labels:Record<string,string>={name:"Nome",region:"Região",city:"Cidade",state:"Estado",title:"Título",event_type:"Tipo",starts_at:"Início",status:"Situação",artist:"Artista",lyrics:"Letra enviada",created_at:"Criado em",origin:"Origem",destination:"Destino",departure_at:"Saída",leader_id:"Líder (ID)",trip_id:"Viagem (ID)",subject:"Assunto",body:"Mensagem",sender_id:"De",recipient_id:"Para",label:"Descrição",storage_path:"Arquivo",is_official:"Logo oficial",group_id:"Grupo",latitude:"Latitude",longitude:"Longitude",recorded_at:"Atualizado em"};
 function fmt(v:unknown){if(v===null||v===undefined||v==="")return "—";if(typeof v==="boolean")return v?"Sim":"Não";if(typeof v==="string"&&/^\d{4}-\d\d-\d\dT/.test(v))return new Date(v).toLocaleString("pt-BR");const statusLabels:Record<string,string>={draft:"Rascunho",published:"Publicada",pending:"Aguardando aprovação",approved:"Aprovada",rejected:"Rejeitada",scheduled:"Programada",awaiting_departure:"Aguardando saída",in_progress:"Em deslocamento",arrived:"Chegou ao destino",completed:"Concluída",issue:"Com ocorrência",active:"Ativo",planned:"Planejado",cancelled:"Cancelada",blocked:"Bloqueado",expected:"Aguardando",boarded:"Embarcou",disembarked:"Desembarcou",absent:"Não compareceu"};if(typeof v==="string"&&statusLabels[v])return statusLabels[v];if(typeof v==="string"&&v.length>42)return v.slice(0,39)+"…";return String(v);}
 export default function ModuleWorkspace({section}:{section:string}){
- const config=modules[section];const [rows,setRows]=useState<Record<string,unknown>[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState("");const [role,setRole]=useState("");
- async function load(){setLoading(true);setError("");try{const db=createClient();const {data:{user}}=await db.auth.getUser();if(user){const {data:p}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();setRole(p?.role||"");}
-  if(section==="configuracoes"){setRows([]);return;}
+ const config=modules[section];const [rows,setRows]=useState<Record<string,unknown>[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState("");const [role,setRole]=useState("");const [canManageLocations,setCanManageLocations]=useState(false);
+ async function load(){setLoading(true);setError("");try{const db=createClient();const {data:{user}}=await db.auth.getUser();if(user){const {data:p}=await db.from("profiles").select("role,can_manage_locations").eq("id",user.id).maybeSingle();setRole(p?.role||"");setCanManageLocations(p?.role==="admin"||p?.role==="pastor"||Boolean(p?.can_manage_locations));}
+  if(section==="configuracoes"||section==="permissoes"||section==="gestao-viagens"){setRows([]);return;}
   let query=db.from(config.table).select(config.columns.join(",")).order(section==="mapa"?"recorded_at":"created_at",{ascending:false}).limit(100);
   if(section==="mensagens"&&user)query=query.or("sender_id.eq."+user.id+",recipient_id.eq."+user.id);
   const {data,error}=await query;if(error)throw error;
@@ -50,6 +55,9 @@ export default function ModuleWorkspace({section}:{section:string}){
  {section==="viagens"&&<TripPassengers/>}
  {section==="relatorios"&&<TravelReports/>}
  {section==="configuracoes"&&<AccountSettings/>}
+ {section==="permissoes"&&<AccessControlManager/>}
+ {section==="gestao-viagens"&&<TripManagerHome/>}
+ {section==="mapa"&&canManageLocations&&<RoutePlanner/>}
  {(section==="mapa"||section==="evangelismo")&&<LocationControls/>}
  {(section==="mapa"||section==="evangelismo")&&<LocationMap/>}
  {section==="mapa"&&<div className="map-info-card"><MapPin size={19}/><div><b>Localização compartilhada com consentimento</b><p>As posições são registradas somente durante viagens ou evangelismos ativos. A tabela abaixo mostra o horário real da última atualização; não representa rastreamento em tempo real enquanto não houver um dispositivo enviando GPS.</p></div></div>}
