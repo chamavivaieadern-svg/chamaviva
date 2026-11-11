@@ -12,7 +12,7 @@ export async function GET() {
 
     const admin = createAdminClient();
     const [{ data: profiles, error: profilesError }, { data: memberships, error: membershipsError }, { data: authUsers, error: authError }] = await Promise.all([
-      admin.from("profiles").select("id,full_name,matricula,role,status,phone,whatsapp,birth_date,address").order("created_at", { ascending: false }),
+      admin.from("profiles").select("id,full_name,matricula,role,status,admin_previous_role,phone,whatsapp,birth_date,address").order("created_at", { ascending: false }),
       admin.from("church_memberships").select("user_id,church_id"),
       admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     ]);
