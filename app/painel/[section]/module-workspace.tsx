@@ -7,7 +7,7 @@ import ModuleActions from "./module-actions";
 import ChurchesManager from "../igrejas/churches-manager";
 import AccessControlManager from "../permissoes/access-control-manager";
 import TripManagerHome from "../gestao-viagens/trip-manager-home";
-import RoutePlanner from "../mapa/route-planner";
+const RoutePlanner=dynamic(()=>import("../mapa/route-planner"),{ssr:false,loading:()=> <div className="data-empty">Carregando planejador de rotas...</div>});
 import ModuleNav from "@/app/components/module-nav";
 import AccountSettings from "../configuracoes/account-settings";
 import ProgramBuilder from "../programacao/program-builder";
