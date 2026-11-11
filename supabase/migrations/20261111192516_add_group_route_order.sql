@@ -1,0 +1,2 @@
+alter table public.crossada_locations add column if not exists route_order integer not null default 0;
+create index if not exists crossada_locations_route_order_idx on public.crossada_locations(trip_id, is_route, route_order);
