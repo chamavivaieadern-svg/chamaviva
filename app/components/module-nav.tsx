@@ -13,7 +13,7 @@ const items=[
  {label:"Programação",href:"/painel/programacao",roles:["admin","pastor","director","preacher","musician","trip_manager"],icon:CalendarDays},
  {label:"Músicas",href:"/painel/musicas",roles:["admin","pastor","director","musician"],icon:Music2},
  {label:"Viagens",href:"/painel/viagens",roles:["admin","pastor","driver","trip_manager"],icon:BusFront},
- {label:"Atividades",href:"/painel/atividades",roles:["leader"],icon:Compass},
+ {label:"Viagens e evangelismo",href:"/painel/atividades",roles:["leader"],icon:Compass},
  {label:"Mapa",href:"/painel/mapa",roles:["admin","pastor","driver","leader","trip_manager"],icon:MapPinned},
  {label:"Evangelismo",href:"/painel/evangelismo",roles:["admin","pastor"],icon:Compass},
  {label:"Mensagens",href:"/painel/mensagens",roles:["admin","pastor","leader","driver","director","preacher","musician","trip_manager"],icon:MessageSquare},
