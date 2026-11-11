@@ -12,6 +12,7 @@ import ModuleNav from "@/app/components/module-nav";
 import AccountSettings from "../configuracoes/account-settings";
 import ProgramBuilder from "../programacao/program-builder";
 import TripPassengers from "../viagens/passengers";
+import AttendanceManager from "../viagens/attendance-manager";
 import VehicleManager from "../viagens/vehicle-manager";
 import TravelReports from "../relatorios/travel-reports";
 const LocationMap=dynamic(()=>import("../mapa/location-map"),{ssr:false,loading:()=> <div className="data-empty">Carregando mapa...</div>});
@@ -58,7 +59,8 @@ export default function ModuleWorkspace({section}:{section:string}){
  {section==="configuracoes"&&<AccountSettings/>}
  {section==="permissoes"&&<AccessControlManager/>}
  {section==="gestao-viagens"&&<TripManagerHome/>}
- {section==="atividades"&&<LocationControls/>}
+ {section==="atividades"&&<><LocationControls/><AttendanceManager/></>}
+ {section==="viagens"&&<AttendanceManager/>
  {section==="mapa"&&canManageLocations&&<RoutePlanner/>}
  {section==="mapa"&&role!=="trip_manager"&&role!=="leader"&&<LocationControls/>}
  {(section==="mapa"||section==="evangelismo")&&<LocationMap/>}
