@@ -18,7 +18,7 @@ export default function LocationControls(){
    db.from("trips").select("id,title,status,destination,departure_at").eq("driver_id",user.id).in("status",["scheduled","awaiting_departure","in_progress"]),
    db.from("evangelism_groups").select("id,name,status,trip_id").eq("leader_id",user.id).in("status",["planned","active"])
   ]);
-  setTrips(t.data||[]);setGroups(g.data||[]);
+  const tripRows=t.data||[],groupRows=g.data||[];setTrips(tripRows);setGroups(groupRows);if(!tripRows.length&&groupRows.length)setKind("group");else if(tripRows.length)setKind("trip");
  }
  useEffect(()=>{load();return()=>{if(watchRef.current!==null)navigator.geolocation?.clearWatch(watchRef.current);};},[]);
  const options=kind==="trip"?trips:groups;
