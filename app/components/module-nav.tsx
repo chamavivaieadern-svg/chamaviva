@@ -3,13 +3,14 @@ import Link from "next/link";
 import {useEffect,useState} from "react";
 import {usePathname,useRouter} from "next/navigation";
 import {createClient} from "@/lib/supabase/client";
-import {Flame,LayoutDashboard,Church,Users,CalendarDays,Music2,BusFront,MapPinned,Compass,MessageSquare,ShieldCheck,ChartNoAxesCombined,FileText,Settings,LogOut,Zap} from "lucide-react";
+import {Flame,LayoutDashboard,Church,Users,CalendarDays,Music2,BusFront,MapPinned,Compass,MessageSquare,ShieldCheck,ChartNoAxesCombined,FileText,Settings,LogOut,Zap,PlayCircle} from "lucide-react";
 const items=[
  {label:"Painel",href:"/painel",roles:["admin","pastor","leader","driver","director","preacher","musician","trip_manager"],icon:LayoutDashboard},
  {label:"Igrejas",href:"/painel/igrejas",roles:["admin","pastor"],icon:Church},
  {label:"Usuários",href:"/painel/usuarios",roles:["admin"],icon:Users},
  {label:"Permissões",href:"/painel/permissoes",roles:["admin"],icon:ShieldCheck},
  {label:"Automações",href:"/painel/automacoes",roles:["admin"],icon:Zap},
+ {label:"Demonstração",href:"/painel/demonstracao",roles:["admin"],icon:PlayCircle},
  {label:"Minha gestão",href:"/painel/gestao-viagens",roles:["trip_manager"],icon:BusFront},
  {label:"Programação",href:"/painel/programacao",roles:["admin","pastor","director","preacher","musician","trip_manager"],icon:CalendarDays},
  {label:"Músicas",href:"/painel/musicas",roles:["admin","pastor","director","musician"],icon:Music2},
