@@ -60,7 +60,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  {section==="permissoes"&&<AccessControlManager/>}
  {section==="gestao-viagens"&&<TripManagerHome/>}
  {section==="atividades"&&<><LocationControls/><AttendanceManager/></>}
- {section==="viagens"&&<AttendanceManager/>
+ {section==="viagens"&&<AttendanceManager/>}
  {section==="mapa"&&canManageLocations&&<RoutePlanner/>}
  {section==="mapa"&&role!=="trip_manager"&&role!=="leader"&&<LocationControls/>}
  {(section==="mapa"||section==="evangelismo")&&<LocationMap/>}
