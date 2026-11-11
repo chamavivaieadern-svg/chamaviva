@@ -58,7 +58,7 @@ export default function ModuleWorkspace({section}:{section:string}){
  {section==="configuracoes"&&<AccountSettings/>}
  {section==="permissoes"&&<AccessControlManager/>}
  {section==="gestao-viagens"&&<TripManagerHome/>}
- {section==="atividades"&&<><LocationControls/><TripPassengers/></>}
+ {section==="atividades"&&<LocationControls/>}
  {section==="mapa"&&canManageLocations&&<RoutePlanner/>}
  {section==="mapa"&&role!=="trip_manager"&&role!=="leader"&&<LocationControls/>}
  {(section==="mapa"||section==="evangelismo")&&<LocationMap/>}
