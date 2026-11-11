@@ -1,0 +1,1 @@
+alter table public.profiles add column if not exists trip_manager_previous_role text;

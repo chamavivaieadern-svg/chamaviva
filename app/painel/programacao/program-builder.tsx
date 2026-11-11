@@ -10,11 +10,11 @@ type Item={id:string;title:string;participant_name:string|null;item_type:string;
 async function imageData(url:string):Promise<string>{const response=await fetch(url);const blob=await response.blob();if(blob.type.includes("svg")){const objectUrl=URL.createObjectURL(blob);try{const img=new Image();await new Promise<void>((resolve,reject)=>{img.onload=()=>resolve();img.onerror=()=>reject(new Error("Logo SVG inválida."));img.src=objectUrl;});const canvas=document.createElement("canvas");canvas.width=img.naturalWidth||600;canvas.height=img.naturalHeight||240;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Não foi possível processar a logo.");ctx.drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL("image/png");}finally{URL.revokeObjectURL(objectUrl);}}return await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(blob);});}
 export default function ProgramBuilder(){
  const [events,setEvents]=useState<EventRow[]>([]),[eventId,setEventId]=useState(""),[items,setItems]=useState<Item[]>([]);
- const [role,setRole]=useState("");
+ const [role,setRole]=useState("");const [canManageProgram,setCanManageProgram]=useState(false);
  const [form,setForm]=useState({title:"",participant_name:"",item_type:"other",time:"",duration_minutes:"",notes:""});
  const [busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState("");
  async function loadEvents(){const db=createClient();const {data:{user}}=await db.auth.getUser();if(!user)return;
-  const {data:p}=await db.from("profiles").select("role").eq("id",user.id).single();setRole(p?.role||"");
+  const {data:p}=await db.from("profiles").select("role,can_manage_program").eq("id",user.id).single();setRole(p?.role||"");setCanManageProgram(Boolean(p?.can_manage_program));
   const {data:e}=await db.from("events").select("id,title,starts_at,venue,status").order("starts_at",{ascending:true});setEvents(e||[]);
   if(e?.length&&!eventId)setEventId(e[0].id);
  }
@@ -33,7 +33,7 @@ export default function ProgramBuilder(){
   setItems(next.map((x,i)=>({...x,sort_order:i})));
  }
  async function remove(id:string){if(!confirm("Remover esta participação da programação?"))return;const db=createClient();const {error}=await db.from("program_items").delete().eq("id",id);if(error)setError(error.message);else loadItems(eventId);}
- async function publish(){if(!eventId||!["admin","director"].includes(role))return;if(!confirm("Publicar esta programação para os usuários autorizados da igreja?"))return;setBusy(true);setError("");const db=createClient();const {error}=await db.from("events").update({status:"published"}).eq("id",eventId);if(error)setError(error.message);else{setMessage("Programação publicada e notificações enviadas.");await loadEvents();}setBusy(false);}
+ async function publish(){if(!eventId||!(["admin","director"].includes(role)||(role==="trip_manager"&&canManageProgram)))return;if(!confirm("Publicar esta programação para os usuários autorizados da igreja?"))return;setBusy(true);setError("");const db=createClient();const {error}=await db.from("events").update({status:"published"}).eq("id",eventId);if(error)setError(error.message);else{setMessage("Programação publicada e notificações enviadas.");await loadEvents();}setBusy(false);}
  async function downloadPdf(){
   if(!["admin","director"].includes(role)){setError("Somente ADM e dirigente podem baixar o PDF.");return;}
   if(!eventId)return;setBusy(true);setError("");
@@ -64,9 +64,10 @@ export default function ProgramBuilder(){
   finally{setBusy(false);}
  }
  const canDownload=role==="admin"||role==="director";
- const canEdit=canDownload;
+ const canPublish=canDownload||(role==="trip_manager"&&canManageProgram);
+ const canEdit=canDownload||(role==="trip_manager"&&canManageProgram);
  return <section className="program-builder">
-  <div className="program-head"><div><b>Montar programação do culto</b><small>Defina a ordem, os participantes, horários e duração.</small></div><div className="program-head-actions">{canDownload&&<button className="module-primary" onClick={publish} disabled={!eventId||busy}><CheckCircle2 size={15}/> Publicar</button>}{canDownload&&<button className="module-primary" onClick={downloadPdf} disabled={!eventId||busy}><FileDown size={15}/> Baixar PDF</button>}</div></div>
+  <div className="program-head"><div><b>Montar programação do culto</b><small>Defina a ordem, os participantes, horários e duração.</small></div><div className="program-head-actions">{canPublish&&<button className="module-primary" onClick={publish} disabled={!eventId||busy}><CheckCircle2 size={15}/> Publicar</button>}{canDownload&&<button className="module-primary" onClick={downloadPdf} disabled={!eventId||busy}><FileDown size={15}/> Baixar PDF</button>}</div></div>
   <label className="program-event-select">Programação<select value={eventId} onChange={e=>setEventId(e.target.value)}><option value="">Selecione um evento</option>{events.map(e=><option key={e.id} value={e.id}>{e.title} — {new Date(e.starts_at).toLocaleDateString("pt-BR")}</option>)}</select></label>
   {eventId&&<>{canEdit&&<form className="program-item-form" onSubmit={addItem}><b><Plus size={15}/> Adicionar participação</b><div className="program-fields">
    <label>Atividade<input required value={form.title} onChange={e=>setForm(v=>({...v,title:e.target.value}))} placeholder="Ex.: Saudação, louvor, pregação"/></label>

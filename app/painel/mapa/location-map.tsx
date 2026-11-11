@@ -1,17 +1,18 @@
 "use client";
-import {useEffect,useMemo,useState} from "react";
-import {MapContainer,TileLayer,CircleMarker,Popup,Polyline,useMap} from "react-leaflet";
+import {Fragment,useEffect,useMemo,useState} from "react";
+import {MapContainer,TileLayer,CircleMarker,Circle,Popup,Polyline,useMap} from "react-leaflet";
 import {createClient} from "@/lib/supabase/client";
 
 type Point={id:number;trip_id:string|null;group_id:string|null;latitude:number;longitude:number;recorded_at:string};
-type Cross={id:string;name:string;latitude:number|null;longitude:number|null;address:string|null};
+type Cross={id:string;name:string;latitude:number|null;longitude:number|null;address:string|null;trip_id:string|null;group_id:string|null;radius_m:number;is_route:boolean;route_mode:string|null;route_path:unknown};
 type TripRoute={id:string;title:string;origin_latitude:number|null;origin_longitude:number|null;destination_latitude:number|null;destination_longitude:number|null};
 type RouteLine={id:string;title:string;positions:[number,number][]};
+type ChurchPoint={id:string;name:string;latitude:number|null;longitude:number|null;plus_code:string|null;maps_url:string|null};
 function Recenter({center}:{center:[number,number]}){const map=useMap();useEffect(()=>{map.setView(center,map.getZoom());},[center,map]);return null;}
 export default function LocationMap(){
- const [points,setPoints]=useState<Point[]>([]),[crosses,setCrosses]=useState<Cross[]>([]),[routes,setRoutes]=useState<RouteLine[]>([]),[error,setError]=useState("");
+ const [points,setPoints]=useState<Point[]>([]),[crosses,setCrosses]=useState<Cross[]>([]),[churches,setChurches]=useState<ChurchPoint[]>([]),[routes,setRoutes]=useState<RouteLine[]>([]),[error,setError]=useState("");
  useEffect(()=>{const db=createClient();let alive=true;
-  async function load(){const [p,c]=await Promise.all([db.from("live_locations").select("id,trip_id,group_id,latitude,longitude,recorded_at").order("recorded_at",{ascending:false}).limit(500),db.from("crossada_locations").select("id,name,latitude,longitude,address")]);if(!alive)return;if(p.error)setError(p.error.message);else setPoints(p.data||[]);if(!c.error)setCrosses(c.data||[]);}
+  async function load(){const [p,c,ch]=await Promise.all([db.from("live_locations").select("id,trip_id,group_id,latitude,longitude,recorded_at").order("recorded_at",{ascending:false}).limit(500),db.from("crossada_locations").select("id,name,latitude,longitude,address,trip_id,group_id,radius_m,is_route,route_mode,route_path"),db.from("churches").select("id,name,latitude,longitude,plus_code,maps_url")]);if(!alive)return;if(p.error)setError(p.error.message);else setPoints(p.data||[]);if(!c.error)setCrosses(c.data||[]);if(!ch.error)setChurches((ch.data||[]) as ChurchPoint[]);}
   load();const channel=db.channel("chama-live-locations").on("postgres_changes",{event:"INSERT",schema:"public",table:"live_locations"},()=>load()).on("postgres_changes",{event:"INSERT",schema:"public",table:"crossada_locations"},()=>load()).subscribe();
   return()=>{alive=false;db.removeChannel(channel);};
  },[]);
@@ -25,17 +26,20 @@ export default function LocationMap(){
   if(alive)setRoutes(lines.filter((x):x is RouteLine=>x!==null));
  })();return()=>{alive=false;};},[]);
  const latest=useMemo(()=>{const seen=new Set<string>();return points.filter(p=>{const key=p.trip_id?"trip:"+p.trip_id:"group:"+p.group_id;if(seen.has(key))return false;seen.add(key);return true;});},[points]);
- const first=latest[0];const firstCross=crosses.find(c=>c.latitude!==null&&c.longitude!==null);const firstRoute=routes[0]?.positions[0];
- const center:[number,number]=first?[first.latitude,first.longitude]:firstCross?[firstCross.latitude!,firstCross.longitude!]:firstRoute||[-15.7939,-47.8828];
+ const first=latest[0];const firstCross=crosses.find(c=>c.latitude!==null&&c.longitude!==null);const firstChurch=churches.find(c=>c.latitude!==null&&c.longitude!==null);const firstRoute=routes[0]?.positions[0];
+ const center:[number,number]=first?[first.latitude,first.longitude]:firstCross?[firstCross.latitude!,firstCross.longitude!]:firstChurch?[firstChurch.latitude!,firstChurch.longitude!]:firstRoute||[-15.7939,-47.8828];
  return <section className="live-map-card"><div className="live-map-head"><div><b>Mapa de operações</b><small>Última posição recebida de cada ônibus e grupo</small></div><span><i/> ATUALIZAÇÃO AO VIVO</span></div>
   {error&&<p className="module-error">{error}</p>}
   <MapContainer center={center} zoom={12} scrollWheelZoom style={{height:360,width:"100%",borderRadius:12}}>
    <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
    <Recenter center={center}/>
+   {churches.filter(c=>c.latitude!==null&&c.longitude!==null).map(c=><CircleMarker key={"church-"+c.id} center={[c.latitude!,c.longitude!]} radius={8} pathOptions={{color:"#2563eb",fillColor:"#60a5fa",fillOpacity:.9}}><Popup><b>{c.name}</b><br/>{c.plus_code||"Plus Code não informado"}<br/>{c.maps_url&&<a href={c.maps_url} target="_blank" rel="noreferrer">Abrir Google Maps</a>}</Popup></CircleMarker>)}
+   {crosses.filter(c=>c.is_route&&Array.isArray(c.route_path)&&(c.route_path as unknown[]).length>1).map(c=><Polyline key={"saved-"+c.id} positions={c.route_path as [number,number][]} pathOptions={{color:"#c64e1a",weight:5,opacity:.9}}><Popup><b>{c.name}</b><br/>Rota salva da viagem</Popup></Polyline>)}
    {routes.map(route=><Polyline key={route.id} positions={route.positions} pathOptions={{color:"#ed7025",weight:4,opacity:.75}}><Popup><b>Trajeto: {route.title}</b><br/>Rota estimada para o destino cadastrado</Popup></Polyline>)}
    {latest.map(p=><CircleMarker key={p.id} center={[p.latitude,p.longitude]} radius={9} pathOptions={{color:p.trip_id?"#ea6a20":"#d6a900",fillColor:p.trip_id?"#ea6a20":"#d6a900",fillOpacity:.9}}><Popup><b>{p.trip_id?"Ônibus / viagem":"Grupo de evangelismo"}</b><br/>Última atualização: {new Date(p.recorded_at).toLocaleString("pt-BR")}</Popup></CircleMarker>)}
-   {crosses.filter(c=>c.latitude!==null&&c.longitude!==null).map(c=><CircleMarker key={c.id} center={[c.latitude!,c.longitude!]} radius={10} pathOptions={{color:"#c92f2f",fillColor:"#dc2626",fillOpacity:.9}}><Popup><b>{c.name}</b><br/>{c.address}</Popup></CircleMarker>)}
+   {crosses.filter(c=>!c.is_route&&c.trip_id&&c.latitude!==null&&c.longitude!==null).map(c=><Fragment key={c.id}><Circle center={[c.latitude!,c.longitude!]} radius={c.radius_m||500} pathOptions={{color:"#d6a000",fillColor:"#f2c94c",fillOpacity:.08}}/><CircleMarker center={[c.latitude!,c.longitude!]} radius={10} pathOptions={{color:"#c92f2f",fillColor:"#dc2626",fillOpacity:.9}}><Popup><b>{c.name}</b><br/>Raio: {c.radius_m||500} m<br/>{c.address}</Popup></CircleMarker></Fragment>)}
+   {crosses.filter(c=>!c.is_route&&!c.trip_id&&c.latitude!==null&&c.longitude!==null).map(c=><CircleMarker key={c.id} center={[c.latitude!,c.longitude!]} radius={10} pathOptions={{color:"#c92f2f",fillColor:"#dc2626",fillOpacity:.9}}><Popup><b>{c.name}</b><br/>{c.address}</Popup></CircleMarker>)}
   </MapContainer>
-  <div className="live-map-legend"><span><i className="legend-bus"/> Ônibus</span><span><i className="legend-team"/> Grupo</span><span><i className="legend-cross"/> Cruzada</span><span><i className="legend-route"/> Trajeto</span><small>{latest.length} localização(ões) recente(s) • {crosses.length} ponto(s) de cruzada</small></div>
+  <div className="live-map-legend"><span><i className="legend-bus"/> Ônibus</span><span><i className="legend-team"/> Grupo</span><span><i className="legend-cross"/> Cruzada</span><span><i className="legend-route"/> Trajeto</span><small>{latest.length} localização(ões) recente(s) • {crosses.length} ponto(s) de cruzada • {churches.length} igreja(s)</small></div>
  </section>;
 }
