@@ -64,7 +64,8 @@ export default function ProgramBuilder(){
   finally{setBusy(false);}
  }
  const canDownload=role==="admin"||role==="director";
- const canEdit=canDownload;
+ const canPublish=canDownload||(role==="trip_manager"&&canManageProgram);
+ const canEdit=canDownload||(role==="trip_manager"&&canManageProgram);
  return <section className="program-builder">
   <div className="program-head"><div><b>Montar programação do culto</b><small>Defina a ordem, os participantes, horários e duração.</small></div><div className="program-head-actions">{canPublish&&<button className="module-primary" onClick={publish} disabled={!eventId||busy}><CheckCircle2 size={15}/> Publicar</button>}{canDownload&&<button className="module-primary" onClick={downloadPdf} disabled={!eventId||busy}><FileDown size={15}/> Baixar PDF</button>}</div></div>
   <label className="program-event-select">Programação<select value={eventId} onChange={e=>setEventId(e.target.value)}><option value="">Selecione um evento</option>{events.map(e=><option key={e.id} value={e.id}>{e.title} — {new Date(e.starts_at).toLocaleDateString("pt-BR")}</option>)}</select></label>
